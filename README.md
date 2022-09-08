@@ -2,4 +2,4 @@
 
 Лабы тут выкладывать буду..
 
-![cat1](https://user-images.githubusercontent.com/85644131/189201034-16b03114-6de1-43a9-ac99-50c62a83ad08.gif)
+![cat](https://user-images.githubusercontent.com/85644131/189212360-1571df80-7d36-49af-bbc7-85ef64cd579d.gif)
