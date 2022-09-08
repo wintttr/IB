@@ -27,10 +27,14 @@ bool match(const string& mask, const vector<string>& v, const vector<int>& c) {
 	return true;
 }
 
-string nextMask(const string& mask) {
+bool nextExists(const string& mask) {
 	if (mask == "tttttttttt")
-		return "";
+		return false;
+	else
+		return true;
+}
 
+string nextMask(const string& mask) {
 	string newMask(mask);
 
 	for (int i = newMask.size() - 1; i >= 0; i--) {
@@ -78,7 +82,7 @@ int main() {
 
 	int solCnt = 0;
 	if (one != true)
-		while (mask != "") {
+		while (nextExists(mask)) {
 			if (match(mask, ans, solutionCount)) {
 				solCnt++;
 				trueSolution = mask;
