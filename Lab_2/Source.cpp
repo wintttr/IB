@@ -6,7 +6,16 @@
 #include<stack>
 using namespace std;
 
-bool eqCheck(const string& str) {
+
+
+bool atLeastOneAlph(const string& str) {
+	for (int i = 0; i < str.size(); i++)
+		if (isalpha(str[i]))
+			return true;
+	return false;
+}
+
+bool parCheck(const string& str) {
 	stack<char> s;
 	for (int i = 0; i < str.size(); i++) {
 		if (str[i] == '(')
@@ -20,8 +29,8 @@ bool eqCheck(const string& str) {
 	return s.empty();
 }
 
-bool parCheck(const string& str) {
-	if (eqCheck(str) && str[0] != '(')
+bool correct(const string& str) {
+	if (parCheck(str) && atLeastOneAlph(str) && str[0] != '(')
 		return true;
 	return false;
 }
@@ -33,12 +42,12 @@ int main() {
 	string output;
 	fin >> output;
 
-	for (int i = 1; i < output.size() / 2; i++) {
+	for (int i = 1; i <= output.size() / 2; i++) {
 		for (int j = 0; (output.size() - j) / i > 1; j++) {
 			int cnt = 0;
 			string sample = output.substr(j, i);
 
-			if (!parCheck(sample))
+			if (!correct(sample))
 				continue;
 
 			int k = 0;
