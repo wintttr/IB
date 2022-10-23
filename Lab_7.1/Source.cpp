@@ -8,6 +8,7 @@
 using namespace std;
 
 enum rights {
+	NONE = 0,
 	READ = 1 << 0,
 	WRITE = 1 << 1,
 	OWN = 1 << 2,
@@ -133,6 +134,8 @@ public:
 
 rights parseright(char c) {
 	switch (c) {
+	case '0':
+		return NONE;
 	case 'r':
 		return READ;
 	case 'w':
