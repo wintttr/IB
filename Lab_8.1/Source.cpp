@@ -132,7 +132,7 @@ public:
 		return (double)rights_.Size() / (double)(objects_ * subjects_) * 100.f;
 	}
 
-	vector<int> FindPrivSubjs(int o, Right r) { // Найти привилегированные субъекты
+	vector<int> FindPrivSubjs(int o, Right r) { // РќР°Р№С‚Рё РїСЂРёРІРёР»РµРіРёСЂРѕРІР°РЅРЅС‹Рµ СЃСѓР±СЉРµРєС‚С‹
 		vector<int> result;
 		for (auto it : rights_.GetMap()) 
 			if (it.first.second == o && it.second & r) 
@@ -161,7 +161,7 @@ public:
 			rm_.AddObject();
 		
 		string temp;
-		getline(iEnv_, temp); // Пропустим одну строку. Костыльно, но что поделать
+		getline(iEnv_, temp); // РџСЂРѕРїСѓСЃС‚РёРј РѕРґРЅСѓ СЃС‚СЂРѕРєСѓ. РљРѕСЃС‚С‹Р»СЊРЅРѕ, РЅРѕ С‡С‚Рѕ РїРѕРґРµР»Р°С‚СЊ
 		while (getline(iEnv_, temp)) {
 			stringstream ss;
 			ss << temp;
@@ -173,14 +173,14 @@ public:
 		int index = rm_.AddSubject();
 		string name;
 		ss >> name;
-		cout << "Субъект " << name << " добавлен под номером " << index << endl;
+		cout << "РЎСѓР±СЉРµРєС‚ " << name << " РґРѕР±Р°РІР»РµРЅ РїРѕРґ РЅРѕРјРµСЂРѕРј " << index << endl;
 	}
 	
 	void AddObj(stringstream& ss) {
 		int index = rm_.AddObject();
 		string name;
 		ss >> name;
-		cout << "Объект " << name << " добавлен под номером " << index << endl;
+		cout << "РћР±СЉРµРєС‚ " << name << " РґРѕР±Р°РІР»РµРЅ РїРѕРґ РЅРѕРјРµСЂРѕРј " << index << endl;
 	}
 
 	void DelSubj(stringstream& ss) {
@@ -210,7 +210,7 @@ public:
 	}
 
 	void FullnessPercent(stringstream& ss) {
-		cout << "Матрица заполнена на " << rm_.FullnessPercent() << "%" << endl;
+		cout << "РњР°С‚СЂРёС†Р° Р·Р°РїРѕР»РЅРµРЅР° РЅР° " << rm_.FullnessPercent() << "%" << endl;
 	}
 
 	void SubjWithRight(stringstream& ss) {

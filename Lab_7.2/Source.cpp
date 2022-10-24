@@ -144,7 +144,7 @@ int main() {
 		std::terminate();
 	}
 	catch (...) {
-		cout << "Íåîïîçíàííàÿ îøèáêà!" << endl;
+		cout << "ĞĞµĞ¾Ğ¿Ğ¾Ğ·Ğ½Ğ°Ğ½Ğ½Ğ°Ñ Ğ¾ÑˆĞ¸Ğ±ĞºĞ°!" << endl;
 		std::terminate();
 	}
 }
