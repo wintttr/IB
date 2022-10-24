@@ -150,8 +150,9 @@ public:
 class Interp {
 	RightsMatrix rm_;
 	ifstream iEnv_;
+	bool should_stop_;
 public:
-	Interp(string e) : iEnv_(e) {
+	Interp(string e) : iEnv_(e), should_stop_(false) {
 		int n, m;
 		iEnv_ >> n >> m;
 		for (int i = 0; i < n; i++)
@@ -164,100 +165,89 @@ public:
 		while (getline(iEnv_, temp)) {
 			stringstream ss;
 			ss << temp;
-			int s, o;
-			char c;
-			ss >> s >> o >> c;
-			AddRight(s, o, ParseRight(c));
+			AddRight(ss);
 		}
 	};
 	
-	void AddSubj(string name) {
+	void AddSubj(stringstream& ss) {
 		int index = rm_.AddSubject();
+		string name;
+		ss >> name;
 		cout << "Субъект " << name << " добавлен под номером " << index << endl;
 	}
 	
-	void AddObj(string name) {
+	void AddObj(stringstream& ss) {
 		int index = rm_.AddObject();
+		string name;
+		ss >> name;
 		cout << "Объект " << name << " добавлен под номером " << index << endl;
 	}
 
-	void DelSubj(int s) {
+	void DelSubj(stringstream& ss) {
+		int s;
+		ss >> s;
 		rm_.DelSubject(s);
 	}
 
-	void DelObj(int o) {
+	void DelObj(stringstream& ss) {
+		int o;
+		ss >> o;
 		rm_.DelObject(o);
 	}
 
-	void AddRight(int s, int o, Right r) {
-		rm_.AddRight(s, o, r);
+	void AddRight(stringstream& ss) {
+		int s, o;
+		char c;
+		ss >> s >> o >> c;
+		rm_.AddRight(s, o, ParseRight(c));
 	}
 	
-	void DelRight(int s, int o, Right r) {
-		rm_.DelRight(s, o, r);
+	void DelRight(stringstream& ss) {
+		int s, o;
+		char c;
+		ss >> s >> o >> c;
+		rm_.DelRight(s, o, ParseRight(c));
 	}
 
-	void FullnessPercent() {
+	void FullnessPercent(stringstream& ss) {
 		cout << "Матрица заполнена на " << rm_.FullnessPercent() << "%" << endl;
 	}
 
-	void SubjWithRight(int o, Right r) {
-		cout << rm_.FindPrivSubjs(o, r);
+	void SubjWithRight(stringstream& ss) {
+		int o;
+		char c;
+		ss >> o >> c;
+		cout << rm_.FindPrivSubjs(o, ParseRight(c));
+	}
+
+	void Exit(stringstream& ss) {
+		should_stop_ = true;
 	}
 
 	bool ParseCmd(stringstream& ss) {
 		string cmd;
 		ss >> cmd;
 
-		if (cmd == "addSubj") {
-			string name;
-			ss >> name;
-			AddSubj(name);
-		}
-		else if (cmd == "addObj") {
-			string name;
-			ss >> name;
-			AddObj(name);
-		}
-		else if (cmd == "delSubj") {
-			int id;
-			ss >> id;
-			DelSubj(id);
-		}
-		else if (cmd == "delObj") {
-			int id;
-			ss >> id;
-			DelObj(id);
-		}
-		else if (cmd == "addRight") {
-			int s, o;
-			char c;
-			ss >> s >> o >> c;
-			AddRight(s, o, ParseRight(c));
-		}
-		else if (cmd == "delRight") {
-			int s, o;
-			char c;
-			ss >> s >> o >> c;
-			DelRight(s, o, ParseRight(c));
-		}
-		else if (cmd == "fullnessPercent") {
-			FullnessPercent();
-		}
-		else if (cmd == "subjWithRight") {
-			int o; 
-			char c;
-			ss >> o >> c;
-			SubjWithRight(o, ParseRight(c));
-		}
-		else if (cmd == "exit") {
-			return false;
-		}
+		using parse_func = void(Interp::*)(stringstream&);
+
+		map<string, parse_func> cmd_func;
+		cmd_func["addSubj"] = &Interp::AddSubj;
+		cmd_func["addObj"] = &Interp::AddObj;
+		cmd_func["delSubj"] = &Interp::DelSubj;
+		cmd_func["delObj"] = &Interp::DelObj;
+		cmd_func["addRight"] = &Interp::AddRight;
+		cmd_func["delRight"] = &Interp::DelRight;
+		cmd_func["fullnessPercent"] =&Interp::FullnessPercent;
+		cmd_func["subjWithRight"] = &Interp::SubjWithRight;
+		cmd_func["exit"] = &Interp::Exit;
+
+		if(cmd_func.find(cmd) != cmd_func.end())
+			(this->*cmd_func[cmd])(ss);
 		else {
 			throw "Unknown command: "s + cmd;
 		}
 
-		return true;
+		return should_stop_;
 	}
 
 	void Print() {
@@ -276,7 +266,7 @@ int main() {
 		while (getline(cin, cmd_line)) {
 			stringstream ss;
 			ss << cmd_line;
-			if (!interp.ParseCmd(ss))
+			if (interp.ParseCmd(ss))
 				break;
 		}
 		interp.Print();
