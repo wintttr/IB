@@ -142,7 +142,7 @@ public:
 
 	friend ostream& operator<<(ostream& out, const RightsMatrix& rm) {
 		for (auto i : rm.rights_.GetMap()) 
-			out << i.first.first << " " << i.first.second << " " << i.second << endl;
+			out << i.first.first << " " << i.first.second << " " << (i.second & READ ? "r" : "") << (i.second & WRITE ? "w" : "") << endl;
 		return out;
 	}
 };
@@ -254,7 +254,7 @@ public:
 			return false;
 		}
 		else {
-			throw;
+			throw "Unknown command: "s + cmd;
 		}
 
 		return true;
