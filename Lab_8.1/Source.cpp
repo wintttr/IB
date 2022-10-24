@@ -274,7 +274,4 @@ int main() {
 	catch (string s) {
 		cout << s; 
 	}
-	catch (const char* cstr) {
-		cout << cstr;
-	}
 }
