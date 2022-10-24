@@ -37,13 +37,13 @@ public:
 	const T& operator()(intex x, intex y) const& {
 		if (x >= n || y >= m)
 			throw;
-		return ptr[x * n + y];
+		return ptr[x * m + y];
 	}
 
 	T operator()(intex x, intex y)&& {
 		if (x >= n || y >= m)
 			throw;
-		return move(ptr[x * n + y]);
+		return move(ptr[x * m + y]);
 	}
 
 	bool operator==(const matrix_instance& op) const {
@@ -64,7 +64,7 @@ public:
 	void set(intex x, intex y, const T& value) {
 		if (x >= n || y >= m)
 			throw;
-		ptr[x * n + y] = value;
+		ptr[x * m + y] = value;
 	}
 };
 
