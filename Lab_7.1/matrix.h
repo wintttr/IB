@@ -135,12 +135,6 @@ public:
 	void resize(intex newn, intex newm) {
 		matrix_instance<T>* temp_ptr = new matrix_instance<T>(newn, newm);
 
-		for (int i = 0; i < newn; i++) {
-			for (int j = 0; j < newm; j++)
-				cout << &(temp_ptr->operator()(i, j)) << " ";
-			cout << endl;
-		}
-
 		for (int i = 0; i < getn(); i++)
 			for (int j = 0; j < getm(); j++)
 				temp_ptr->set(i, j, (*this)(i, j));

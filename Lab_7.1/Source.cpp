@@ -4,10 +4,11 @@
 #include<string>
 #include<sstream>
 #include"matrix.h"
+#include<map>
 
 using namespace std;
 
-enum rights {
+enum Rights {
 	NONE = 0,
 	READ = 1 << 0,
 	WRITE = 1 << 1,
@@ -38,101 +39,101 @@ ostream& operator<<(ostream& out, const matrix<int>& m) {
 }
 
 class HRU {
-	vector<int> obj_image;
-	vector<int> subj_image;
-	matrix<int> matr;
+	vector<int> obj_image_;
+	vector<int> subj_image_;
+	matrix<int> matr_;
 public:
-	HRU() : matr(0, 0) {}
+	HRU() : matr_(0, 0) {}
 
-	HRU(const matrix<int>& m) : matr(m) {
+	HRU(const matrix<int>& m) : matr_(m) {
 		for (int i = 0; i < m.getn(); i++)
-			subj_image.push_back(i);
+			subj_image_.push_back(i);
 		for (int i = 0; i < m.getm(); i++)
-			obj_image.push_back(i);
+			obj_image_.push_back(i);
 	}
 
-	bool obj_exist(int image) {
-		return find(obj_image.begin(), obj_image.end(), image) != obj_image.end();
+	bool ObjExists(int image) {
+		return find(obj_image_.begin(), obj_image_.end(), image) != obj_image_.end();
 	}
 
-	bool subj_exist(int image) {
-		return find(subj_image.begin(), subj_image.end(), image) != subj_image.end();
+	bool SubjExists(int image) {
+		return find(subj_image_.begin(), subj_image_.end(), image) != subj_image_.end();
 	}
 
-	int find_object(int i) {
-		if (obj_exist(i))
-			return find(obj_image.begin(), obj_image.end(), i) - obj_image.begin();
+	int FindObject(int i) {
+		if (ObjExists(i))
+			return find(obj_image_.begin(), obj_image_.end(), i) - obj_image_.begin();
 		else
 			throw "Object not found";
 	}
 
-	int find_subject(int i) {
-		if (subj_exist(i))
-			return find(subj_image.begin(), subj_image.end(), i) - subj_image.begin();
+	int FindSubject(int i) {
+		if (SubjExists(i))
+			return find(subj_image_.begin(), subj_image_.end(), i) - subj_image_.begin();
 		else
 			throw "Subject not found";
 	}
 
-	void create_obj(int image) {
-		if (obj_exist(image))
+	void CreateObj(int image) {
+		if (ObjExists(image))
 			throw "Object already exists";
 
-		obj_image.push_back(image);
+		obj_image_.push_back(image);
 		
-		matr.resize(matr.getn(), matr.getm() + 1);
+		matr_.resize(matr_.getn(), matr_.getm() + 1);
 
-		for (int i = 0; i < matr.getn(); i++) {
-			matr.set(i, matr.getm() - 1, 0);
+		for (int i = 0; i < matr_.getn(); i++) {
+			matr_.set(i, matr_.getm() - 1, 0);
 		}
 	}
 
-	void create_subj(int image) {
-		if (subj_exist(image))
+	void CreateSubj(int image) {
+		if (SubjExists(image))
 			throw "Sybject already exists";
 
-		subj_image.push_back(image);
-		matr.resize(matr.getn() + 1, matr.getm());
+		subj_image_.push_back(image);
+		matr_.resize(matr_.getn() + 1, matr_.getm());
 			
-		for (int i = 0; i < matr.getm(); i++)
-			matr.set(matr.getn() - 1, i, 0);
+		for (int i = 0; i < matr_.getm(); i++)
+			matr_.set(matr_.getn() - 1, i, 0);
 	}
 
-	void destroy_obj(int image) {
-		if (!obj_exist(image))
+	void DestroyObj(int image) {
+		if (!ObjExists(image))
 			throw "Object doesn't exists";
 
-		int index = find(obj_image.begin(), obj_image.end(), image) - obj_image.begin();
-		for (int i = 0; i < matr.getn(); i++)
-			matr.set(i, index, 0);
+		int index = find(obj_image_.begin(), obj_image_.end(), image) - obj_image_.begin();
+		for (int i = 0; i < matr_.getn(); i++)
+			matr_.set(i, index, 0);
 	}
 
-	void destroy_subj(int image) {
-		if (!subj_exist(image))
+	void DestroySubj(int image) {
+		if (!SubjExists(image))
 			throw "Subject doesn't exists";
 
-		int index = find(subj_image.begin(), subj_image.end(), image) - subj_image.begin();
-		for (int i = 0; i < matr.getm(); i++)
-			matr.set(index, i, 0);
+		int index = find(subj_image_.begin(), subj_image_.end(), image) - subj_image_.begin();
+		for (int i = 0; i < matr_.getm(); i++)
+			matr_.set(index, i, 0);
 	}
 
-	void enter(rights p, int i, int j) {
-		matr.set(i, j, matr(i, j) | p);
+	void Enter(Rights p, int i, int j) {
+		matr_.set(i, j, matr_(i, j) | p);
 	}
 
-	void del(rights p, int i, int j) {
-		matr.set(i, j, matr(i, j) & ~p);
+	void Del(Rights p, int i, int j) {
+		matr_.set(i, j, matr_(i, j) & ~p);
 	}
 
-	bool check(rights p, int i, int j) {
-		return matr(i, j) & p;
+	bool Check(Rights p, int i, int j) {
+		return matr_(i, j) & p;
 	}
 
 	friend ostream& operator<<(ostream& out, const HRU& h) {
-		return (out << h.matr);
+		return (out << h.matr_);
 	}
 };
 
-rights parseright(char c) {
+Rights ParseRight(char c) {
 	switch (c) {
 	case '0':
 		return NONE;
@@ -149,75 +150,78 @@ rights parseright(char c) {
 	}
 }
 
-int parserights(const string& s) {
+int ParseRights(const string& s) {
 	int result = 0;
 	for (int i = 0; i < s.size(); i++)
-		result |= parseright(s[i]);
+		result |= ParseRight(s[i]);
 	
 	return result;
 }
 
-class interp {
+class Interp {
 	HRU h;
-	ifstream env;
-	ifstream prog;
-	ofstream result;
+	ifstream iEnv;
+	ifstream iProg;
+	ofstream oResult;
 public:
-	interp(string e, string p, string r) : env(e), prog(p), result(r) {
+		Interp(string e, string p, string r) : iEnv(e), iProg(p), oResult(r) {
 		int n, m;
-		env >> n;
-		env >> m;
+		iEnv >> n;
+		iEnv >> m;
 		matrix<int> temp(n, m);
 		for(int i = 0; i < n; i++)
 			for (int j = 0; j < m; j++) {
 				string s;
-				env >> s;
-				temp.set(i, j, parserights(s));
+				iEnv >> s;
+				temp.set(i, j, ParseRights(s));
 			}
 		h = HRU(temp);
 	}
 
-	void write_result() {
-		result << h;
+	void WriteResult() {
+		oResult << h;
 	}
 
-	~interp() {
-		write_result();
-		env.close();
-		prog.close();
-		result.close();
+	~Interp() {
+		WriteResult();
+		iEnv.close();
+		iProg.close();
+		oResult.close();
 	}
 
-	void next_cmd(bool exec, stringstream& sstream) {
+	void NextCmd(stringstream& sstream) {
 		string cmd;
 		sstream >> cmd;
+
 		cout << "Command: " << cmd << endl;
+
+		
 		if (cmd == "\'O+\'") {
 			int image;
 			sstream >> image;
-			h.create_obj(image);
+			h.CreateObj(image);
 		}
 		else if (cmd == "\'S+\'") {
 			int image;
 			sstream >> image;
-			h.create_subj(image);
+			h.CreateSubj(image);
 		}
 		else if (cmd == "\'O-\'") {
 			int image;
 			sstream >> image;
-			h.destroy_obj(image);
+			h.DestroyObj(image);
 		}
 		else if (cmd == "\'S-\'") {
 			int image;
 			sstream >> image;
-			h.destroy_subj(image);
+			h.DestroySubj(image);
 		}
 		else if (cmd == "if") {
 			string rstring;
 			string ignore;
 			string indexes;
 			sstream >> rstring >> ignore >> indexes; // ignore == in
-			rights r = parseright(rstring[0]);
+			Rights r = ParseRight(rstring[0]);
 
 			int i, j;
 			int delim1 = indexes.find(','), delim2 = indexes.find(']');
@@ -225,47 +229,48 @@ public:
 			i = stoi(indexes.substr(2, delim1 - 2));
 			j = stoi(indexes.substr(delim1 + 1, delim2 - delim1 - 1));
 
-			i = h.find_subject(i);
-			j = h.find_object(j);
+			i = h.FindSubject(i);
+			j = h.FindObject(j);
 
 			sstream >> ignore; // ignore == then
-			next_cmd(h.check(r, i, j), sstream);
+			if(h.Check(r, i, j))
+				NextCmd(sstream);
 		}
 		else if (cmd[cmd.size() - 2] == '+') {
-			rights r = parseright(cmd[1]);
+			Rights r = ParseRight(cmd[1]);
 			int i, j;
 			sstream >> i >> j;
-			i = h.find_subject(i);
-			j = h.find_object(j);
-			h.enter(r, i, j);
+			i = h.FindSubject(i);
+			j = h.FindObject(j);
+			h.Enter(r, i, j);
 		}
 		else if (cmd[cmd.size() - 2] == '-') {
-			rights r = parseright(cmd[1]);
+			Rights r = ParseRight(cmd[1]);
 			int i, j;
 			sstream >> i >> j;
 
-			i = h.find_subject(i);
-			j = h.find_object(j);
+			i = h.FindSubject(i);
+			j = h.FindObject(j);
 
-			h.del(r, i, j);
+			h.Del(r, i, j);
 		}
 		else
 			throw "Unknown command";
 	}
 
-	void run() {
+	void Run() {
 		string line;
 		cout << "Original matrix: " << endl;
 		cout << h << endl;
 
-		while (getline(prog, line)) {
+		while (getline(iProg, line)) {
 			stringstream ss;
 
 			if (line == "")
 				continue;
 
 			ss << line;
-			next_cmd(true, ss);
+			NextCmd(ss);
 			cout << h << endl;
 		}
 	}
@@ -273,8 +278,8 @@ public:
 
 int main() {
 	try {
-		interp I("environ", "progr", "rzlt");
-		I.run();
+		Interp interp("environ", "progr", "rzlt");
+		interp.Run();
 	}
 	catch (const char& str) {
 		cout << str << endl;
