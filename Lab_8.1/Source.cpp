@@ -4,6 +4,7 @@
 #include<fstream>
 #include<string>
 #include<sstream>
+#include<Windows.h>
 
 using namespace std;
 
@@ -20,7 +21,7 @@ Right ParseRight(char c) {
 	case 'w':
 		return WRITE;
 	default:
-		throw;
+		throw "Unknown Right: "s + c;
 	}
 }
 
@@ -80,7 +81,7 @@ public:
 		return m_.size();
 	}
 
-	map<pair<int, int>, int> const & GetMap() {
+	map<pair<int, int>, int> const & GetMap() const {
 		return m_;
 	}
 };
@@ -110,14 +111,20 @@ public:
 	}
 
 	void AddRight(int s, int o, Right r) {
-		if (s > subjects_ || o > objects_)
-			throw "Subject or object doesn\'t exists.";
+		if (s > subjects_ || o > objects_) {
+			stringstream error_stream;
+			error_stream << "Subject " << s << " or object " << o << " doesn\'t exists.";
+			throw error_stream.str();
+		}
 		rights_.Set(s, o, rights_.Get(s, o) | r);
 	}
 
 	void DelRight(int s, int o, Right r) {
-		if (s > subjects_ || o > objects_)
-			throw "Subject or object doesn\'t exists.";
+		if (s > subjects_ || o > objects_) {
+			stringstream error_stream;
+			error_stream << "Subject " << s << " or object " << o << " doesn\'t exists.";
+			throw error_stream.str();
+		}
 		rights_.Set(s, o, rights_.Get(s, o) & ~r);
 	}
 
@@ -132,19 +139,36 @@ public:
 				result.push_back(it.first.first);
 		return result;
 	}
+
+	friend ostream& operator<<(ostream& out, const RightsMatrix& rm) {
+		for (auto i : rm.rights_.GetMap()) 
+			out << i.first.first << " " << i.first.second << " " << i.second << endl;
+		return out;
+	}
 };
 
 class Interp {
 	RightsMatrix rm_;
-	ifstream env;
+	ifstream iEnv_;
 public:
-	Interp(string e) : env(e) {
+	Interp(string e) : iEnv_(e) {
 		int n, m;
-		env >> n >> m;
+		iEnv_ >> n >> m;
 		for (int i = 0; i < n; i++)
-			rm_.AddObject();
-		for (int i = 0; i < m; i++)
 			rm_.AddSubject();
+		for (int i = 0; i < m; i++)
+			rm_.AddObject();
+		
+		string temp;
+		getline(iEnv_, temp); // Пропустим одну строку. Костыльно, но что поделать
+		while (getline(iEnv_, temp)) {
+			stringstream ss;
+			ss << temp;
+			int s, o;
+			char c;
+			ss >> s >> o >> c;
+			AddRight(s, o, ParseRight(c));
+		}
 	};
 	
 	void AddSubj(string name) {
@@ -181,7 +205,7 @@ public:
 		cout << rm_.FindPrivSubjs(o, r);
 	}
 
-	void ParseCmd(stringstream& ss) {
+	bool ParseCmd(stringstream& ss) {
 		string cmd;
 		ss >> cmd;
 
@@ -206,13 +230,13 @@ public:
 			DelObj(id);
 		}
 		else if (cmd == "addRight") {
-			int s, int o;
+			int s, o;
 			char c;
 			ss >> s >> o >> c;
 			AddRight(s, o, ParseRight(c));
 		}
 		else if (cmd == "delRight") {
-			int s, int o;
+			int s, o;
 			char c;
 			ss >> s >> o >> c;
 			DelRight(s, o, ParseRight(c));
@@ -227,22 +251,40 @@ public:
 			SubjWithRight(o, ParseRight(c));
 		}
 		else if (cmd == "exit") {
-			std::terminate();
+			return false;
 		}
 		else {
 			throw;
 		}
+
+		return true;
+	}
+
+	void Print() {
+		cout << rm_ << endl;
 	}
 };
 
 
 int main() {
-	string env = "environ";
-	Interp interp(env);
-	string cmd_line;
-	while (getline(cin, cmd_line)) {
-		stringstream ss;
-		ss << cmd_line;
-		interp.ParseCmd(ss);
+	try {
+		SetConsoleCP(1251);
+		SetConsoleOutputCP(1251);
+		string env = "environ";
+		Interp interp(env);
+		string cmd_line;
+		while (getline(cin, cmd_line)) {
+			stringstream ss;
+			ss << cmd_line;
+			if (!interp.ParseCmd(ss))
+				break;
+		}
+		interp.Print();
+	}
+	catch (string s) {
+		cout << s; 
+	}
+	catch (const char* cstr) {
+		cout << cstr;
 	}
 }
