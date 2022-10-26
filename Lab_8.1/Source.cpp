@@ -5,11 +5,13 @@
 #include<string>
 #include<sstream>
 #include<Windows.h>
+#include<set>
+#include<queue>
 
 using namespace std;
 
 enum Right {
-	NONE = 0,
+	NONE = 0, 
 	READ = 1 << 0,
 	WRITE = 1 << 1
 };
@@ -30,6 +32,27 @@ ostream& operator<<(ostream& out, const vector<int>& v) {
 		out << v[i] << " ";
 	return out;
 }
+
+class Index {
+	int i_;
+	queue<int> q_;
+public:
+	Index() : i_(1) {}
+
+	int GetNext() {
+		if (q_.empty())
+			return i_++;
+		else {
+			int result = q_.front();
+			q_.pop();
+			return result;
+		}
+	}
+
+	void SetNext(int j) {
+		q_.push(j);
+	}
+};
 
 class SparceMatrix
 {
@@ -86,50 +109,75 @@ public:
 	}
 };
 
+
 class RightsMatrix {
 	SparceMatrix rights_;
-	int objects_;
-	int subjects_;
+	Index objects_ind_;
+	Index subjects_ind_;
+	set<int> objects_;
+	set<int> subjects_;
 
 public:
-	RightsMatrix() : objects_(0), subjects_(0) {};
+	bool SubjectExists(int i) {
+		return subjects_.find(i) != subjects_.end();
+	}
+
+	bool ObjectExists(int i) {
+		return objects_.find(i) != objects_.end();
+	}
 
 	int AddSubject() {
-		return subjects_++;
+		int i = subjects_ind_.GetNext();
+		subjects_.insert(i);
+		return i;
 	}
 	
 	void DelSubject(int i) {
-		rights_.ClearRow(i);
+		if (SubjectExists(i)) {
+			rights_.ClearRow(i);
+			subjects_ind_.SetNext(i);
+			subjects_.erase(i);
+		}
+		else
+			throw "Subject "s + to_string(i) + " doesn't exist."s;
 	}
 
 	int AddObject() {
-		return objects_++;
+		int i = objects_ind_.GetNext();
+		objects_.insert(i);
+		return i;
 	}
 
 	void DelObject(int i) {
-		rights_.ClearCol(i);
+		if (ObjectExists(i)) {
+			rights_.ClearCol(i);
+			objects_ind_.SetNext(i);
+			objects_.erase(i);
+		}
+		else
+			throw "Object "s + to_string(i) + " doesn't exist."s;
 	}
 
 	void AddRight(int s, int o, Right r) {
-		if (s > subjects_ || o > objects_) {
+		if (!SubjectExists(s) || !ObjectExists(o)) {
 			stringstream error_stream;
-			error_stream << "Subject " << s << " or object " << o << " doesn\'t exists.";
+			error_stream << "Subject " << s << " or object " << o << " doesn\'t exist.";
 			throw error_stream.str();
 		}
 		rights_.Set(s, o, rights_.Get(s, o) | r);
 	}
 
 	void DelRight(int s, int o, Right r) {
-		if (s > subjects_ || o > objects_) {
+		if (!SubjectExists(s) || !ObjectExists(o)) {
 			stringstream error_stream;
-			error_stream << "Subject " << s << " or object " << o << " doesn\'t exists.";
+			error_stream << "Subject " << s << " or object " << o << " doesn\'t exist.";
 			throw error_stream.str();
 		}
 		rights_.Set(s, o, rights_.Get(s, o) & ~r);
 	}
 
 	int FullnessPercent() {
-		return (double)rights_.Size() / (double)(objects_ * subjects_) * 100.f;
+		return (double)rights_.Size() / (double)(objects_.size() * subjects_.size()) * 100.f;
 	}
 
 	vector<int> FindPrivSubjs(int o, Right r) { // Найти привилегированные субъекты
@@ -173,14 +221,14 @@ public:
 		int index = rm_.AddSubject();
 		string name;
 		ss >> name;
-		cout << "Субъект " << name << " добавлен под номером " << index << endl;
+		cout << "Subject " << name << " has been registered as " << index << endl;
 	}
 	
 	void AddObj(stringstream& ss) {
 		int index = rm_.AddObject();
 		string name;
 		ss >> name;
-		cout << "Объект " << name << " добавлен под номером " << index << endl;
+		cout << "Object " << name << " has been registered as " << index << endl;
 	}
 
 	void DelSubj(stringstream& ss) {
@@ -210,7 +258,7 @@ public:
 	}
 
 	void FullnessPercent(stringstream& ss) {
-		cout << "Матрица заполнена на " << rm_.FullnessPercent() << "%" << endl;
+		cout << "The matrix is " << rm_.FullnessPercent() << "% full." << endl;
 	}
 
 	void SubjWithRight(stringstream& ss) {
@@ -258,8 +306,6 @@ public:
 
 int main() {
 	try {
-		SetConsoleCP(1251);
-		SetConsoleOutputCP(1251);
 		string env = "environ";
 		Interp interp(env);
 		string cmd_line;
@@ -268,6 +314,7 @@ int main() {
 			ss << cmd_line;
 			if (interp.ParseCmd(ss))
 				break;
+			cout << endl;
 		}
 		interp.Print();
 	}
