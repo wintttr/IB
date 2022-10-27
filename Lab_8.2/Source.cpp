@@ -35,6 +35,13 @@ vector<string> Split(const string& s, T is_delimeter) {
 	return result;
 }
 
+bool IsEmpty(const string& s) {
+	for (char c : s)
+		if (!IsSpace(c))
+			return false;
+	return true;
+}
+
 void tolower(string& str) {
 	for (int i = 0; i < str.size(); i++)
 		str[i] = tolower(str[i]);
@@ -47,7 +54,7 @@ class ChineseWall {
 	map<int, set<pair<int, Access>>> history;		// История обращения субъекта к объектам
 public:
 	ChineseWall() : n_(0), m_(0), f_(0) {}
-	ChineseWall(int n, map<int, int> st, map<int, int> col) : n_(n), m_(st.size()), f_(col.size()) {}
+	ChineseWall(int n, map<int, int> st, map<int, int> col) : n_(n), m_(st.size()), f_(col.size()), stock_(st), collision_(col) {}
 
 	bool IsSubjInHistory(int s) {
 		return history.find(s) != history.end();
@@ -66,11 +73,7 @@ public:
 			const set<pair<int, Access>>& hs = history[s];
 
 			for (auto &[i, _] : hs) {
-				if (stock_[o] == stock_[i]) {
-					f = true;
-					break;
-				}
-				if (collision_[stock_[o]] == collision_[stock_[i]]) {
+				if (stock_[o] != stock_[i] && collision_[stock_[o]] == collision_[stock_[i]]) {
 					f = false;
 					break;
 				}
@@ -197,13 +200,16 @@ class Interp {
 public:
 	Interp(ifstream&& env) {
 		ifstream iEnv(move(env));
-
 		int n, m, f;
-		iEnv >> n >> m >> f;
-
+		string line;
+		getline(iEnv, line);
+		vector<string> nmf = Split(line, IsSpace);
+		n = stoi(nmf[0]);
+		m = stoi(nmf[1]);
+		f = stoi(nmf[2]);
+		
 		map<int, int> stock;
 		for (int i = 0; i < f; i++) {
-			string line;
 			getline(iEnv, line);
 			vector<string> splitted_line = Split(line, IsSpace);
 			for (auto s : splitted_line) {
