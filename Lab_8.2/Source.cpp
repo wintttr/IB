@@ -151,7 +151,6 @@ public:
 
 class Interp {
 	ChineseWall c;
-	ifstream iEnv;
 
 	void Start(stringstream& ss) {
 		c.Start();
@@ -196,7 +195,9 @@ class Interp {
 	}
 
 public:
-	Interp(string env) : iEnv(env) {
+	Interp(ifstream&& env) {
+		ifstream iEnv(move(env));
+
 		int n, m, f;
 		iEnv >> n >> m >> f;
 
@@ -226,6 +227,8 @@ public:
 		}
 
 		c = ChineseWall(n, stock, col);
+
+		iEnv.close();
 	}
 
 	void ParseCmd(stringstream& ss) {
@@ -248,7 +251,7 @@ public:
 
 int main() {
 	string env_file = "environ";
-	Interp inp(env_file);
+	Interp inp(ifstream{ env_file });
 
 	string line;
 	while (getline(cin, line)) {
