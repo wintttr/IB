@@ -65,7 +65,7 @@ uchar Rcon[] = {
 };
 
 // left cycle rotate
-// Хотел сократить, но так будет абсолютно нечитаемо:
+// РҐРѕС‚РµР» СЃРѕРєСЂР°С‚РёС‚СЊ, РЅРѕ С‚Р°Рє Р±СѓРґРµС‚ Р°Р±СЃРѕР»СЋС‚РЅРѕ РЅРµС‡РёС‚Р°РµРјРѕ:
 // (x << (n & 0x07)) | ((x & (((1 << (n & 0x07 + 1)) - 1) << (8 - n & 0x07))) >> (8 - (n & 0x07)))
 inline uchar lcr(uchar x, uint n) {
     n %= 8;
@@ -102,7 +102,7 @@ void InvSubBytes(uchar state[4][4]) {
 }
 
 void MixColumns(uchar state[4][4]) {
-    // Матрица, на которую умножаем:
+    // РњР°С‚СЂРёС†Р°, РЅР° РєРѕС‚РѕСЂСѓСЋ СѓРјРЅРѕР¶Р°РµРј:
     //    {2, 3, 1, 1}
     //    {1, 2, 3, 1}
     //    {1, 1, 2, 3}
@@ -121,7 +121,7 @@ void MixColumns(uchar state[4][4]) {
 }
 
 void InvMixColumns(uchar state[4][4]) {
-    // Матрица, на которую умножаем:
+    // РњР°С‚СЂРёС†Р°, РЅР° РєРѕС‚РѕСЂСѓСЋ СѓРјРЅРѕР¶Р°РµРј:
     //    {0x0e, 0x0b, 0x0d, 0x09}
     //    {0x09, 0x0e, 0x0b, 0x0d}
     //    {0x0d, 0x09, 0x0e, 0x0b}
@@ -193,7 +193,7 @@ void KeyExpansion(const uchar* key, uint w[Nb*(Nr+1)]) {
 }
 
 // Block == 128 bit == 16 byte
-// Размер w = [Nb*(Nr+1)]
+// Р Р°Р·РјРµСЂ w = [Nb*(Nr+1)]
 void EncryptBlock(const uchar* in, uchar* out, const uint* w) {
     uchar state[4][Nb];
 
@@ -255,7 +255,7 @@ string Encrypt(string_view text, uchar key[16]) {
         EncryptBlock(reinterpret_cast<const uchar*>(text.data()) + i, raw_result + i, w);
     
     if (i != text.size()) {
-        uchar temp[16] = {}; // Такая инициализация заполняет массив нулями
+        uchar temp[16] = {}; // РўР°РєР°СЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ Р·Р°РїРѕР»РЅСЏРµС‚ РјР°СЃСЃРёРІ РЅСѓР»СЏРјРё
 
         for (int j = (text.size() / 16) * 16; j < text.size(); j++)
             temp[j % 16] = text[j];
@@ -280,7 +280,7 @@ string Decrypt(string_view crypt_text, uchar key[16]) {
         DecryptBlock(reinterpret_cast<const uchar*>(crypt_text.data()) + i, raw_result + i, w);
 
     if (i != crypt_text.size()) {
-        uchar temp[16] = {}; // Такая инициализация заполняет массив нулями
+        uchar temp[16] = {}; // РўР°РєР°СЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ Р·Р°РїРѕР»РЅСЏРµС‚ РјР°СЃСЃРёРІ РЅСѓР»СЏРјРё
 
         for (int j = (crypt_text.size() / 16) * 16; j < crypt_text.size(); j++)
             temp[j % 16] = crypt_text[j];
