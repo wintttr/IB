@@ -64,28 +64,25 @@ uchar Rcon[] = {
         0x36000000
 };
 
-// left cycle rotate
-// Хотел сократить, но так будет абсолютно нечитаемо:
-// (x << (n & 0x07)) | ((x & (((1 << (n & 0x07 + 1)) - 1) << (8 - n & 0x07))) >> (8 - (n & 0x07)))
-inline uchar lcr(uchar x, uint n) {
-    n %= 8;
-    uchar mask = (1 << (n+1)) - 1;
-    mask <<= (8 - n);
-    return (x << n) | ((x & mask) >> (8 - n));
-}
-
-
-uchar Sum(uchar op1, uchar op2) {
+uint Sum(uint op1, uint op2) {
     return op1 ^ op2;
 }
 
 uchar Mult(uchar op1, uchar op2) {
-    uchar result = 0;
+    const uint p = 0b100011011; // x^8 + x^4 + x^3 + x + 1
+
+    uint result = 0;
     for (int i = 0; i < 8; i++) {
         if (op1 & (1 << i)) {
-            result = Sum(result, lcr(op2, i));
+            result = Sum(result, op2 << i);
         }
     }
+
+    while (result >= 256) {
+        int d = 31 - __lzcnt(result);
+        result = Sum(result, p << (d - 8));
+    }
+
     return result;
 }
 
