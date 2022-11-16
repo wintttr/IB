@@ -258,21 +258,21 @@ void DecryptBlock(const uchar* in, uchar* out, const uint w[Nb*(Nr+1)]) {
             out[r + 4 * c] = state[r][c];
 }
 
-string Encrypt(string_view text, const uchar key[16]) {
-    uchar* raw_result = new uchar[(text.size() / 16 + 1) * 16 + 1];
-    raw_result[(text.size() / 16 + 1) * 16] = 0;
+string Encrypt(string_view text, const uchar key[kBlockSize]) {
+    uchar* raw_result = new uchar[(text.size() / kBlockSize + 1) * kBlockSize + 1];
+    raw_result[(text.size() / kBlockSize + 1) * kBlockSize] = 0;
     uint w[Nb * (Nr + 1)];
     KeyExpansion(key, w);
 
     int i;
-    for (i = 0; i < text.size() && (i + 15) < text.size(); i += 16)
+    for (i = 0; i < text.size() && (i + 15) < text.size(); i += kBlockSize)
         EncryptBlock(reinterpret_cast<const uchar*>(text.data()) + i, raw_result + i, w);
     
     if (i != text.size()) {
-        uchar temp[16] = {}; // Такая инициализация заполняет массив нулями
+        uchar temp[kBlockSize] = {}; // Такая инициализация заполняет массив нулями
 
-        for (int j = (text.size() / 16) * 16; j < text.size(); j++)
-            temp[j % 16] = text[j];
+        for (int j = (text.size() / kBlockSize) * kBlockSize; j < text.size(); j++)
+            temp[j % kBlockSize] = text[j];
         
         EncryptBlock(temp, raw_result + i, w);
     }
@@ -283,21 +283,21 @@ string Encrypt(string_view text, const uchar key[16]) {
     return result;
 }
 
-string Decrypt(string_view crypt_text, const uchar key[16]) {
-    uchar* raw_result = new uchar[(crypt_text.size() / 16 + 1) * 16 + 1];
-    raw_result[(crypt_text.size() / 16 + 1) * 16] = 0;
+string Decrypt(string_view crypt_text, const uchar key[kBlockSize]) {
+    uchar* raw_result = new uchar[(crypt_text.size() / kBlockSize + 1) * kBlockSize + 1];
+    raw_result[(crypt_text.size() / kBlockSize + 1) * kBlockSize] = 0;
     uint w[Nb * (Nr + 1)];
     KeyExpansion(key, w);
 
     int i;
-    for (i = 0; i < crypt_text.size() && (i + 15) < crypt_text.size(); i += 16)
+    for (i = 0; i < crypt_text.size() && (i + 15) < crypt_text.size(); i += kBlockSize)
         DecryptBlock(reinterpret_cast<const uchar*>(crypt_text.data()) + i, raw_result + i, w);
 
     if (i != crypt_text.size()) {
-        uchar temp[16] = {}; // Такая инициализация заполняет массив нулями
+        uchar temp[kBlockSize] = {}; // Такая инициализация заполняет массив нулями
 
-        for (int j = (crypt_text.size() / 16) * 16; j < crypt_text.size(); j++)
-            temp[j % 16] = crypt_text[j];
+        for (int j = (crypt_text.size() / kBlockSize) * kBlockSize; j < crypt_text.size(); j++)
+            temp[j % kBlockSize] = crypt_text[j];
 
         DecryptBlock(temp, raw_result + i, w);
     }
@@ -308,53 +308,17 @@ string Decrypt(string_view crypt_text, const uchar key[16]) {
     return result;
 }
 
-
-//int main() {
-//    const char* raw_key = "0123456789ABCDEF";
-//    uchar key[16];
-//    for (int i = 0; i < 16; i++)
-//        key[i] = raw_key[i];
-//
-//    string raw_text = "ABCDEF"
-//        ;
-//    cout << "Raw text:" << endl;
-//    cout << "\Plain text: " << raw_text << endl;
-//    cout << "\tHex: ";
-//    for (int i = 0; i < raw_text.size(); i++)
-//        cout << hex << "0x" << ((uint)raw_text[i] & 0xff) << " ";
-//    cout << endl << endl;
-//
-//    string enc_text = Encrypt(raw_text, key);
-//    cout << "Encrypted text:" << endl;
-//    cout << "\tPlain text: " << enc_text << endl;
-//    cout << "\tHex: ";
-//    for (int i = 0; i < enc_text.size(); i++)
-//        cout << hex << "0x" << ((uint) enc_text[i] & 0xff) << " ";
-//    cout << endl << endl;
-//
-//    string dec_text = Decrypt(enc_text, key);
-//    cout << "Decrypted text:" << endl;
-//    cout << "\tPlain text: " << dec_text << endl;
-//    cout << "\tHex: ";
-//    for (int i = 0; i < dec_text.size(); i++)
-//        cout << hex << "0x" << ((uint) dec_text[i] & 0xff) << " ";
-//    cout << endl << endl;
-//}
-
-
-
 int main() {
     test_mix_columns();
     test_key_expansion();
     test_encrypt_block();
 
     const char* raw_key = "0123456789ABCDEF";
-    uchar key[16];
-    for (int i = 0; i < 16; i++)
+    uchar key[kBlockSize];
+    for (int i = 0; i < kBlockSize; i++)
         key[i] = raw_key[i];
 
-    string raw_text = "ABCDEF"
-        ;
+    string raw_text = "ABCDEF";
     cout << "Raw text:" << endl;
     cout << "\Plain text: " << raw_text << endl;
     cout << "\tHex: ";

@@ -1,0 +1,81 @@
+#pragma once
+#include"constants.h"
+
+using uchar = uint8_t;
+using uint = uint32_t;
+
+void EncryptBlock(const uchar* in, uchar* out, const uint w[4 * (10 + 1)]);
+void KeyExpansion(const uchar* key, uint w[Nb * (Nr + 1)]);
+void MixColumns(uchar state[Nk][Nb]);
+
+template<typename T, int N>
+constexpr bool debug_check_eq(T(&arr1)[N], T(&arr2)[N]) {
+    for (int i = 0; i < N; i++)
+        if (arr1[i] != arr2[i])
+            return false;
+    return true;
+}
+
+template<typename T, int N, int M>
+constexpr bool debug_check_eq(T(&arr1)[N][M], T(&arr2)[N][M]) {
+    for (int j = 0; j < M; j++)
+        for (int i = 0; i < N; i++)
+            if (arr1[i][j] != arr2[i][j])
+                return false;
+    return true;
+}
+
+void test_encrypt_block() {
+    uchar in[kBlockSize] = { 0x00, 0x04, 0x12, 0x14, 0x12, 0x04, 0x12, 0x00, 0x0C, 0x00, 0x13, 0x11, 0x08, 0x23, 0x19, 0x19 };
+    uchar out[kBlockSize];
+    uchar key[kBlockSize] = { 0x24, 0x75, 0xA2, 0xB3, 0x34, 0x75, 0x56, 0x88, 0x31, 0xE2, 0x12, 0x00, 0x13, 0xAA, 0x54, 0x87 };
+
+    uint w[Nb * (Nr + 1)];
+    KeyExpansion(key, w);
+    EncryptBlock(in, out, w);
+
+    uchar true_answer[kBlockSize] = { 0xbc, 0x2, 0x8b, 0xd3, 0xe0, 0xe3, 0xb1, 0x95, 0x55, 0xd, 0x6d, 0xf8, 0xe6, 0xf1, 0x82, 0x41 };
+
+    assert(debug_check_eq(true_answer, out));
+}
+
+void test_mix_columns() {
+    uchar state[Nk][Nb] = {
+        {0x63, 0xC9, 0xFE, 0x30},
+        {0xF2, 0x63, 0x26, 0xF2},
+        {0x7D, 0xD4, 0xC9, 0xC9},
+        {0xD4, 0xFA, 0x63, 0x82}
+    };
+
+    MixColumns(state);
+
+    uchar true_state[Nk][Nb] = {
+        {0x62, 0x02, 0x27, 0x26},
+        {0xCF, 0x92, 0x91, 0x0D},
+        {0x0C, 0x0C, 0xF4, 0xD6},
+        {0x99, 0x18, 0x30, 0x74}
+    };
+
+    assert(debug_check_eq(state, true_state));
+}
+
+void test_key_expansion() {
+    uchar key[kBlockSize] = { 0x24, 0x75, 0xA2, 0xB3, 0x34, 0x75, 0x56, 0x88, 0x31, 0xE2, 0x12, 0x00, 0x13, 0xAA, 0x54, 0x87 };
+    uint w[Nb * (Nr + 1)];
+    KeyExpansion(key, w);
+
+    uint true_w[] = { 0x2475a2b3, 0x34755688, 0x31e21200, 0x13aa5487,
+                      0x8955b5ce, 0xbd20e346, 0x8cc2f146, 0x9f68a5c1,
+                      0xce53cd15, 0x73732e53, 0xffb1df15, 0x60d97ad4,
+                      0xff8985c5, 0x8cfaab96, 0x734b7483, 0x13920e57,
+                      0xb822deb8, 0x34d8752e, 0x479301ad, 0x54010ffa,
+                      0xd454f398, 0xe08c86b6, 0xa71f871b, 0xf31e88e1,
+                      0x86900b95, 0x661c8d23, 0xc1030a38, 0x321d82d9,
+                      0x62833eb6, 0x049fb395, 0xc59cb9ad, 0xf7813b74,
+                      0xee61acde, 0xeafe1f4b, 0x2f62a6e6, 0xd8e39d92,
+                      0xe43fe3bf, 0x0ec1fcf4, 0x21a35a12, 0xf940c780,
+                      0xdbf92e26, 0xd538d2d2, 0xf49b88c0, 0x0ddb4f40,
+    };
+
+    assert(debug_check_eq(w, true_w));
+}
