@@ -1,4 +1,5 @@
 #pragma once
+#include<cassert>
 #include"constants.h"
 
 using uchar = uint8_t;

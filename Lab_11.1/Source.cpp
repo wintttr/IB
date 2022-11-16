@@ -3,7 +3,6 @@
 #include<vector>
 #include<iomanip>
 #include<bit>
-#include<cassert>
 #include"constants.h"
 #include"tests.h"
 
@@ -66,9 +65,7 @@ uint Rcon[] = {
 
 uint SwapToBe(uint x) {
     if constexpr (endian::native == endian::little)
-    {
         x = ((x & 0xff) << 24) | ((x & 0xff00) << 8) | ((x & 0xff0000) >> 8) | ((x & 0xff000000) >> 24);
-    }
     return x;
 }
 
@@ -80,11 +77,9 @@ uchar Mult(uchar op1, uchar op2) {
     const uint p = 0b100011011; // x^8 + x^4 + x^3 + x + 1
 
     uint result = 0;
-    for (int i = 0; i < 8; i++) {
-        if (op1 & (1 << i)) {
+    for (int i = 0; i < 8; i++)
+        if (op1 & (1 << i))
             result = Sum(result, op2 << i);
-        }
-    }
 
     while (result >= 256) {
         int d = 31 - __lzcnt(result);
@@ -207,7 +202,6 @@ void KeyExpansion(const uchar* key, uint w[Nb*(Nr+1)]) {
 }
 
 // Block == 128 bit == 16 byte
-// Размер w = [Nb*(Nr+1)]
 void EncryptBlock(const uchar* in, uchar* out, const uint w[Nb*(Nr+1)]) {
     uchar state[Nk][Nb];
 
