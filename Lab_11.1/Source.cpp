@@ -151,28 +151,30 @@ uint SubWord(uint x) {
     return temp;
 }
 
-uint RotWord(uint x) {
-    return (x << 8) | ((x&0xff000000) >> 24);
+void RotWord(uchar x[4]) {
+    uchar temp = x[0];
+    for (int i = 0; i + 1 < 4; i++)
+        x[i] = x[i + 1];
+    x[3] = temp;
 }
 
-uint InvRotWord(uint x) {
-    return (x >> 8) | ((x & 0xff) << 24);
+void InvRotWord(uchar x[4]) {
+    uchar temp = x[3];
+    for (int i = 3; i - 1 >= 0; i--)
+        x[i] = x[i - 1];
+    x[0] = temp;
 }
 
 void ShiftRows(uchar st[4][4]) {
-    uint* state = reinterpret_cast<uint*>(st);
-
-    state[1] = RotWord(state[1]);
-    state[2] = RotWord(RotWord(state[2]));
-    state[3] = RotWord(RotWord(RotWord(state[3])));
+    RotWord(st[1]);
+    RotWord(st[2]); RotWord(st[2]);
+    RotWord(st[3]); RotWord(st[3]); RotWord(st[3]);
 }
 
 void InvShiftRows(uchar st[4][4]) {
-    uint* state = reinterpret_cast<uint*>(st);
-
-    state[1] = InvRotWord(state[1]);
-    state[2] = InvRotWord(InvRotWord(state[2]));
-    state[3] = InvRotWord(InvRotWord(InvRotWord(state[3])));
+    InvRotWord(st[1]);
+    InvRotWord(st[2]); InvRotWord(st[2]);
+    InvRotWord(st[3]); InvRotWord(st[3]); InvRotWord(st[3]);
 }
 
 void KeyExpansion(const uchar* key, uint w[Nb*(Nr+1)]) {
@@ -182,7 +184,7 @@ void KeyExpansion(const uchar* key, uint w[Nb*(Nr+1)]) {
     for (int i = 4; i < Nb * (Nr + 1); i++) {
         uint temp = w[i - 1];
         if (i % Nk == 0)
-            temp = SubWord(RotWord(temp)) ^ Rcon[i / Nk];
+            temp = SubWord(temp << 8 | ((temp & 0xff000000) >> 24)) ^ Rcon[i / Nk];
         else if (Nk > 6 && i % Nk == 4)
             temp = SubWord(temp);
         w[i] = w[i - Nk] ^ temp;
