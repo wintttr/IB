@@ -1,16 +1,16 @@
 #include<iostream>
 #include<string>
 #include<vector>
-#include<bitset>
 #include<iomanip>
+#include<bit>
+#include<cassert>
+#include"constants.h"
+#include"tests.h"
 
 using namespace std;
 
 using uchar = uint8_t;
 using uint = uint32_t;
-
-
-constexpr int Nk = 4, Nb = 4, Nr = 10;
 
 uchar Sbox[] = {
         0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
@@ -64,6 +64,14 @@ uint Rcon[] = {
         0x36000000
 };
 
+uint SwapToBe(uint x) {
+    if constexpr (endian::native == endian::little)
+    {
+        x = ((x & 0xff) << 24) | ((x & 0xff00) << 8) | ((x & 0xff0000) >> 8) | ((x & 0xff000000) >> 24);
+    }
+    return x;
+}
+
 uint Sum(uint op1, uint op2) {
     return op1 ^ op2;
 }
@@ -86,26 +94,26 @@ uchar Mult(uchar op1, uchar op2) {
     return result;
 }
 
-void SubBytes(uchar state[4][4]) {
-    for (int i = 0; i < 4; i++)
-        for (int j = 0; j < 4; j++)
+void SubBytes(uchar state[Nk][Nb]) {
+    for (int i = 0; i < Nk; i++)
+        for (int j = 0; j < Nb; j++)
             state[i][j] = Sbox[state[i][j]];
 }
 
-void InvSubBytes(uchar state[4][4]) {
-    for (int i = 0; i < 4; i++)
-        for (int j = 0; j < 4; j++)
+void InvSubBytes(uchar state[Nk][Nb]) {
+    for (int i = 0; i < Nk; i++)
+        for (int j = 0; j < Nb; j++)
             state[i][j] = InvSbox[state[i][j]];
 }
 
-void MixColumns(uchar state[4][4]) {
+void MixColumns(uchar state[Nk][Nb]) {
     // Матрица, на которую умножаем:
     //    {2, 3, 1, 1}
     //    {1, 2, 3, 1}
     //    {1, 1, 2, 3}
     //    {3, 1, 1, 2}
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < Nb; i++) {
         int a = state[0][i];
         int b = state[1][i];
         int c = state[2][i];
@@ -117,14 +125,14 @@ void MixColumns(uchar state[4][4]) {
     }
 }
 
-void InvMixColumns(uchar state[4][4]) {
+void InvMixColumns(uchar state[Nk][Nb]) {
     // Матрица, на которую умножаем:
     //    {0x0e, 0x0b, 0x0d, 0x09}
     //    {0x09, 0x0e, 0x0b, 0x0d}
     //    {0x0d, 0x09, 0x0e, 0x0b}
     //    {0x0b, 0x0d, 0x09, 0x0e}
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < Nb; i++) {
         int a = state[0][i];
         int b = state[1][i];
         int c = state[2][i];
@@ -136,19 +144,26 @@ void InvMixColumns(uchar state[4][4]) {
     }
 }
 
-void AddRoundKey(uchar st[4][4], const uint* r) {
-    uchar* state = reinterpret_cast<uchar*>(st);
-    const uchar* round = reinterpret_cast<const uchar*>(r);
-    for (int i = 0; i < 16; i++)
-        state[i] ^= round[i];
+void AddRoundKey(uchar st[Nk][Nb], const uint* r) {
+    uint temp_arr[Nb];
+    for (int i = 0; i < Nb; i++)
+        temp_arr[i] = SwapToBe(r[i]);
+    
+
+    uchar* round = reinterpret_cast<uchar*>(temp_arr);
+    for (int i = 0; i < Nb; i++) {
+        st[0][i] ^= round[i*4];
+        st[1][i] ^= round[i*4+1];
+        st[2][i] ^= round[i*4+2];
+        st[3][i] ^= round[i*4+3];
+    }
 }
 
 uint SubWord(uint x) {
-    uint temp = x;
-    uchar* temp_as_bytes = reinterpret_cast<uchar*>(&temp);
+    uchar* x_as_bytes = reinterpret_cast<uchar*>(&x);
     for (int i = 0; i < 4; i++)
-        temp_as_bytes[i] = Sbox[temp_as_bytes[i]];
-    return temp;
+        x_as_bytes[i] = Sbox[x_as_bytes[i]];
+    return x;
 }
 
 void RotWord(uchar x[4]) {
@@ -165,13 +180,13 @@ void InvRotWord(uchar x[4]) {
     x[0] = temp;
 }
 
-void ShiftRows(uchar st[4][4]) {
+void ShiftRows(uchar st[Nk][Nb]) {
     RotWord(st[1]);
     RotWord(st[2]); RotWord(st[2]);
     RotWord(st[3]); RotWord(st[3]); RotWord(st[3]);
 }
 
-void InvShiftRows(uchar st[4][4]) {
+void InvShiftRows(uchar st[Nk][Nb]) {
     InvRotWord(st[1]);
     InvRotWord(st[2]); InvRotWord(st[2]);
     InvRotWord(st[3]); InvRotWord(st[3]); InvRotWord(st[3]);
@@ -179,7 +194,7 @@ void InvShiftRows(uchar st[4][4]) {
 
 void KeyExpansion(const uchar* key, uint w[Nb*(Nr+1)]) {
     for (int i = 0; i < Nk; i++)
-        w[i] = *reinterpret_cast<const uint*>(&key[i*4]);
+        w[i] = SwapToBe(*reinterpret_cast<const uint*>(&key[i * 4]));
 
     for (int i = 4; i < Nb * (Nr + 1); i++) {
         uint temp = w[i - 1];
@@ -193,10 +208,10 @@ void KeyExpansion(const uchar* key, uint w[Nb*(Nr+1)]) {
 
 // Block == 128 bit == 16 byte
 // Размер w = [Nb*(Nr+1)]
-void EncryptBlock(const uchar* in, uchar* out, const uint* w) {
-    uchar state[4][Nb];
+void EncryptBlock(const uchar* in, uchar* out, const uint w[Nb*(Nr+1)]) {
+    uchar state[Nk][Nb];
 
-    for (int r = 0; r < 4; r++)
+    for (int r = 0; r < Nk; r++)
         for (int c = 0; c < Nb; c++)
             state[r][c] = in[r + 4 * c];
     
@@ -212,16 +227,16 @@ void EncryptBlock(const uchar* in, uchar* out, const uint* w) {
     ShiftRows(state);
     AddRoundKey(state, &w[Nr*Nb]);
 
-    for (int r = 0; r < 4; r++)
+    for (int r = 0; r < Nk; r++)
         for (int c = 0; c < Nb; c++)
             out[r + 4 * c] = state[r][c];
 }
 
 // Block == 128 bit == 16 byte
-void DecryptBlock(const uchar* in, uchar* out, const uint* w) { 
-    uchar state[4][Nb];
+void DecryptBlock(const uchar* in, uchar* out, const uint w[Nb*(Nr+1)]) {
+    uchar state[Nk][Nb];
 
-    for (int r = 0; r < 4; r++)
+    for (int r = 0; r < Nk; r++)
         for (int c = 0; c < Nb; c++)
             state[r][c] = in[r + 4 * c];
 
@@ -238,12 +253,12 @@ void DecryptBlock(const uchar* in, uchar* out, const uint* w) {
     InvSubBytes(state);
     AddRoundKey(state, &w[0]);
 
-    for (int r = 0; r < 4; r++)
+    for (int r = 0; r < Nk; r++)
         for (int c = 0; c < Nb; c++)
             out[r + 4 * c] = state[r][c];
 }
 
-string Encrypt(string_view text, uchar key[16]) {
+string Encrypt(string_view text, const uchar key[16]) {
     uchar* raw_result = new uchar[(text.size() / 16 + 1) * 16 + 1];
     raw_result[(text.size() / 16 + 1) * 16] = 0;
     uint w[Nb * (Nr + 1)];
@@ -268,7 +283,7 @@ string Encrypt(string_view text, uchar key[16]) {
     return result;
 }
 
-string Decrypt(string_view crypt_text, uchar key[16]) {
+string Decrypt(string_view crypt_text, const uchar key[16]) {
     uchar* raw_result = new uchar[(crypt_text.size() / 16 + 1) * 16 + 1];
     raw_result[(crypt_text.size() / 16 + 1) * 16] = 0;
     uint w[Nb * (Nr + 1)];
@@ -294,7 +309,45 @@ string Decrypt(string_view crypt_text, uchar key[16]) {
 }
 
 
+//int main() {
+//    const char* raw_key = "0123456789ABCDEF";
+//    uchar key[16];
+//    for (int i = 0; i < 16; i++)
+//        key[i] = raw_key[i];
+//
+//    string raw_text = "ABCDEF"
+//        ;
+//    cout << "Raw text:" << endl;
+//    cout << "\Plain text: " << raw_text << endl;
+//    cout << "\tHex: ";
+//    for (int i = 0; i < raw_text.size(); i++)
+//        cout << hex << "0x" << ((uint)raw_text[i] & 0xff) << " ";
+//    cout << endl << endl;
+//
+//    string enc_text = Encrypt(raw_text, key);
+//    cout << "Encrypted text:" << endl;
+//    cout << "\tPlain text: " << enc_text << endl;
+//    cout << "\tHex: ";
+//    for (int i = 0; i < enc_text.size(); i++)
+//        cout << hex << "0x" << ((uint) enc_text[i] & 0xff) << " ";
+//    cout << endl << endl;
+//
+//    string dec_text = Decrypt(enc_text, key);
+//    cout << "Decrypted text:" << endl;
+//    cout << "\tPlain text: " << dec_text << endl;
+//    cout << "\tHex: ";
+//    for (int i = 0; i < dec_text.size(); i++)
+//        cout << hex << "0x" << ((uint) dec_text[i] & 0xff) << " ";
+//    cout << endl << endl;
+//}
+
+
+
 int main() {
+    test_mix_columns();
+    test_key_expansion();
+    test_encrypt_block();
+
     const char* raw_key = "0123456789ABCDEF";
     uchar key[16];
     for (int i = 0; i < 16; i++)
