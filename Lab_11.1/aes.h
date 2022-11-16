@@ -160,18 +160,16 @@ uint SubWord(uint x) {
     return x;
 }
 
+// {1, 2, 3, 4} => {2, 3, 4, 1}
 void RotWord(uchar x[4]) {
-    uchar temp = x[0];
     for (int i = 0; i + 1 < 4; i++)
-        x[i] = x[i + 1];
-    x[3] = temp;
+        swap(x[i], x[i + 1]);
 }
 
+// {1, 2, 3, 4} => {4, 1, 2, 3}
 void InvRotWord(uchar x[4]) {
-    uchar temp = x[3];
     for (int i = 3; i - 1 >= 0; i--)
-        x[i] = x[i - 1];
-    x[0] = temp;
+        swap(x[i], x[i-1]);
 }
 
 void ShiftRows(uchar st[Nk][Nb]) {
