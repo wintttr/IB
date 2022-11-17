@@ -17,12 +17,20 @@ int main() {
     test_encrypt_block();
     test_decrypt_block();
 
-    const char* raw_key = "0123456789ABCDEF";
-    uchar key[kBlockSize];
-    for (int i = 0; i < kBlockSize; i++)
-        key[i] = raw_key[i];
+    string raw_text, raw_key;
 
-    string raw_text = "ABCDEF";
+    cout << "Enter the key (16 symbols): ";
+    getline(cin, raw_key);
+    cout << "Enter plain text: " << endl;
+    getline(cin, raw_text);
+    
+    int i = 0;
+    uchar key[kBlockSize];
+    for (; i < raw_key.size() && i < kBlockSize; i++)
+        key[i] = raw_key[i];
+    for (; i < kBlockSize; i++)
+        key[i] = 0;
+
     cout << "Raw text:" << endl;
     cout << "\tPlain text: " << raw_text << endl;
     cout << "\tHex: ";
