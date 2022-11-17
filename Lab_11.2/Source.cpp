@@ -2,6 +2,7 @@
 #include<iomanip>
 #include<cassert>
 #include<intrin.h>
+#include<bitset>
 
 using namespace std;
 
@@ -9,7 +10,7 @@ using uchar = uint8_t;
 using uint = uint32_t;
 
 static const uchar kInvReplace[] = {
-  58, 50, 42, 34, 26, 18, 10,   2,
+  58, 50, 42, 34, 26, 18, 10,  2,
   60, 52, 44, 36, 28, 20, 12,  4,
   62, 54, 46, 38, 30, 22, 14,  6,
   64, 56, 48, 40, 32, 24, 16,  8,
@@ -33,8 +34,8 @@ static const uchar kReplace[] = {
 static const uchar S[8][4][16] = {
     {
         {14,  4, 13,  1,  2, 15, 11,  8,  3, 10,  6, 12,  5,  9,  0,  7},
-        { 0, 15,  7,  4, 14,  2, 13, 10,  3,  6, 12, 11,  9,  5,  3,  8},
-        { 4,  1, 14,  7, 13,  6,  2, 11, 15, 12,  9,  7,  3, 10,  5,  0},
+        { 0, 15,  7,  4, 14,  2, 13,  1, 10,  6, 12, 11,  9,  5,  3,  8},
+        { 4,  1, 14,  8, 13,  6,  2, 11, 15, 12,  9,  7,  3, 10,  5,  0},
         {15, 12,  8,  2,  4,  9,  1,  7,  5, 11,  3, 14, 10,  0,  6, 13}
     },
 
@@ -70,7 +71,7 @@ static const uchar S[8][4][16] = {
         {12,  1, 10, 15,  9,  2,  6,  8,  0, 13,  3,  4, 14,  7,  5, 11},
         {10, 15,  4,  2,  7, 12,  9,  5,  6,  1, 13, 14,  0, 11,  3,  8},
         { 9, 14, 15,  5,  2,  8, 12,  3,  7,  0,  4, 10,  1, 13, 11,  6},
-        { 4,  3,  2, 12,  9,  5, 15, 10, 11, 14,  1,  7, 10,  0,  8, 13}
+        { 4,  3,  2, 12,  9,  5, 15, 10, 11, 14,  1,  7,  6,  0,  8, 13}
     },
 
     {
@@ -82,7 +83,7 @@ static const uchar S[8][4][16] = {
 
     {
         {13,  2,  8,  4,  6, 15, 11,  1, 10,  9,  3, 14,  5,  0, 12,  7},
-        { 1, 15, 13,  8, 10,  3,  7,  4, 12,  5,  6, 11, 10, 14,  9,  2},
+        { 1, 15, 13,  8, 10,  3,  7,  4, 12,  5,  6, 11,  0, 14,  9,  2},
         { 7, 11,  4,  1,  9, 12, 14,  2,  0,  6, 10, 13, 15,  3,  5,  8},
         { 2,  1, 14,  7,  4, 10,  8, 13, 15, 12,  9,  0,  3,  5,  6, 11}
     }
@@ -95,7 +96,7 @@ const uchar P[] = {
     19, 13, 30,  6, 22, 11,  4, 25
 };
 
-const uchar compress[]{
+const uchar compress[] = {
     14, 17, 11, 24,  1,  5,  3, 28,
     15,  6, 21, 10, 23, 19, 12,  4,
     26,  8, 16,  7, 27, 20, 13,  2,
@@ -104,13 +105,28 @@ const uchar compress[]{
     34, 53, 46, 42, 50, 36, 29, 32
 };
 
+const uchar keyshift[] = {
+    57, 49, 41, 33, 25, 17,  9,  1,
+    58, 50, 42, 34, 26, 18, 10,  2,
+    59, 51, 43, 35, 27, 19, 11,  3, 
+    60, 52, 44, 36, 63, 55, 47, 39,
+    31, 23, 15,  7, 62, 54, 46, 38,
+    30, 22, 14,  6, 61, 53, 45, 37,
+    29, 21, 13,  5, 28, 20, 12,  4
+};
+
 void test_s(const uchar s[4][16]) {
-    for(int i = 0; i < 4; i++)
+    for (int i = 0; i < 4; i++) {
+        bool f[16] = {};
+        for (int j = 0; j < 16; j++)
+            f[j] = false;
+
         for (int j = 0; j < 16; j++) {
-            bool f[16] = {};
-            assert(!f[j]);
-            f[j] = true;
+            if (f[s[i][j]])
+                terminate();
+            f[s[i][j]] = true;
         }
+    }
 }
 
 uint64_t Replace(uint64_t x) {
@@ -132,15 +148,14 @@ uint64_t InvReplace(uint64_t x) {
 uint32_t DES(uint32_t R, uint64_t key) {
     uint8_t key_parts[8] = {};
 
-    // Делим ключ на 8 частей по 6 байт каждая
+    // Делим ключ на 8 частей по 6 бит каждая
     for (int i = 0; i < 8; i++) {
-        key_parts[i] = (key & 0xFC000000) >> 26;
-        key_parts[i] << 2;
-        key << 6;
+        key_parts[i] = (key & 0xFC00000000000000) >> 56;
+        key <<= 6;
     }
 
-    // Расширяем past_R с 32 байт до 48
-    uint8_t R_parts[8];
+    // Расширяем past_R с 32 бит до 48 бит
+    uint8_t R_parts[8] = {};
     for (int i = 0; i < 8; i++)
         R_parts[i] = ((R >> (32 - 4 * (i + 1))) & 0xf) << 3;
     for (int i = 1; i < 7; i++)
@@ -152,7 +167,7 @@ uint32_t DES(uint32_t R, uint64_t key) {
     for (int i = 0; i < 8; i++)
         R_parts[i] ^= key_parts[i];
 
-    // S-преобразование (сужаем до 32 байт)
+    // S-преобразование (сужаем до 32 бит)
     uint32_t new_R = 0;
     for (int i = 0; i < 8; i++) {
         uint8_t row = 0, col = 0;
@@ -170,46 +185,47 @@ uint32_t DES(uint32_t R, uint64_t key) {
     return new_R2;
 }
 
-//
 uint LeftShift(uint x, uint num) {
-    num %= 28;
-    uint temp = (x & (((1ul << num) - 1) << 32 - num)) >> (28 - num);
+    uint temp = (x & (((1ul << num) - 1) << (32 - num))) >> (28 - num);
     return (x << num) | temp;
 }
 
 uint RightShift(uint x, uint num) {
-    num %= 28;
     uint temp = (x & (((1ul << num) - 1) << 4)) << (28 - num);
-
     return ((x >> num) | temp) & 0xfffffff0;
 }
 
 uint64_t Compressor(uint32_t left, uint32_t right) {
-    uint64_t leftnright = ((uint64_t)left) | (((uint64_t)right) >> 28);
+    uint64_t leftnright = (static_cast<uint64_t>(left) << 32) | (static_cast<uint64_t>(right) << 4);
     uint64_t result = 0;
 
     for (int i = 0; i < 48; i++)
-        result = (result << 1) | ((leftnright & (1ull << (32 - compress[i]))) ? 1 : 0);
+        result = (result << 1) | ((leftnright & (1ull << (64 - compress[i]))) ? 1 : 0);
     
     return result << 16;
 }
 
-void CreateKeyTable(uint8_t raw_key[7], uint64_t keys[16]) {
+void CreateKeyTable(uint8_t raw_key[8], uint64_t keys[16]) {
+    uint64_t key64 = 0;
+    for (int i = 0; i < 8; i++)
+        key64 = (key64 << 8) | raw_key[i];
+
     uint64_t key = 0;
-    for (int i = 0; i < 7; i++)
-        key = (key << 8) | raw_key[i];
+    for (int i = 0; i < 56; i++)
+        key = (key << 1) | ((key64 & (1ull << (64 - keyshift[i]))) ? 1 : 0);
     key <<= 8;
 
     uint32_t left = 0, right = 0;
-    left = key >> 40;
-    right = (key >> 8) & 0xffffffff;
+    left  = (key & 0xfffffff000000000) >> 32;
+    right = static_cast<uint>((key & 0x0000000fffffff00) >> 4);
+
     for (int i = 0; i < 16; i++) {
         if (i == 0 || i == 1 || i == 8 || i == 15) {
-            left = RightShift(left, 1);
+            left = LeftShift(left, 1);
             right = LeftShift(right, 1);
         }
         else {
-            left = RightShift(left, 2);
+            left = LeftShift(left, 2);
             right = LeftShift(right, 2);
         }
         keys[i] = Compressor(left, right);
@@ -218,15 +234,17 @@ void CreateKeyTable(uint8_t raw_key[7], uint64_t keys[16]) {
 
 void Round(uint32_t past_L, uint32_t past_R, uint32_t* L, uint32_t* R, uint64_t round_key) {
     uint32_t new_R = DES(past_R, round_key);
-
     *R = past_L ^ new_R;
     *L = past_R;
+    cout << hex << past_L << " " << past_R << " " << *L << " " << *R << " " << round_key << endl;
 }
 
 void EncryptBlock(const uint8_t in_block[8], uint8_t out_block[8], const uint64_t r_keys[16]) {
     uint64_t word = 0;
     for (int i = 0; i < 8; i++)
-        word = word << 8 | in_block[i];
+        word = (word << 8) | in_block[i];
+
+    word = Replace(word);
 
     uint32_t left = word >> 32;
     uint32_t right = word & 0xffffffff;
@@ -238,19 +256,52 @@ void EncryptBlock(const uint8_t in_block[8], uint8_t out_block[8], const uint64_
     }
     swap(left, right);
 
-    for (int i = 0; i < 4; i++) {
-        out_block[i] = (left >> (24 - 8 * i)) & 0xff;
-    }
+    uint64_t out_word = (static_cast<uint64_t>(left) << 32) | static_cast<uint64_t>(right);
 
-    for (int i = 0; i < 4; i++) {
-        out_block[i] = (right >> (24 - 8 * i)) & 0xff;
+    out_word = InvReplace(out_word);
+
+    for (int i = 0; i < 8; i++) {
+        out_block[i] = (out_word >> (64 - 8 * (i + 1))) & 0xff;
     }
 }
 
+void print_hex(string_view sv) {
+    for (int i = 0; i < sv.size(); i++)
+        cout << hex << "0x" << ((uint)sv[i] & 0xff) << " ";
+    cout << endl;
+}
+
+void GetReverse(const uchar s[64]) {
+    cout << "{ ";
+    for (int i = 1; i < 65; i++) {
+        for (int k = 0; k < 64; k++)
+            if (s[k] == i) {
+                cout << dec << k+1 << ", ";
+                break;
+            }
+    }
+    cout << " }";
+}
+
 int main() {
+    for (int i = 0; i < 8; i++) {
+        test_s(S[i]);
+        cout << i << " passed" << endl;
+    }
+
     uchar text[8] = {0x12, 0x34, 0x56, 0xAB, 0xCD, 0x13, 0x25, 0x36};
-    uchar key[7] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H' };
+    uchar key[8] = {0xAA, 0xBB, 0x09, 0x18, 0x27, 0x36, 0xCC, 0xDD};
     uchar out[8];
 
+    uint64_t w[16];
+    CreateKeyTable(key, w);
+    EncryptBlock(text, out, w);
 
+    for (int i = 0; i < 8; i++)
+        cout << hex << "0x" << (uint)out[i] << " ";
+
+    cout << endl << endl;
+    GetReverse(kReplace);
+    cout << endl;
+    GetReverse(kInvReplace);
 }

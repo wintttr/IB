@@ -250,8 +250,8 @@ void DecryptBlock(const uchar* in, uchar* out, const uint w[Nb*(Nr+1)]) {
 }
 
 string Encrypt(string_view text, const uchar key[kBlockSize]) {
-    uchar* raw_result = new uchar[(text.size() / kBlockSize + 1) * kBlockSize + 1];
-    raw_result[(text.size() / kBlockSize + 1) * kBlockSize] = 0;
+    uchar* raw_result = new uchar[(text.size() / (kBlockSize + 1) + 1) * kBlockSize + 1];
+    raw_result[(text.size() / (kBlockSize + 1) + 1) * kBlockSize] = 0;
     uint w[Nb * (Nr + 1)];
     KeyExpansion(key, w);
 
@@ -275,8 +275,8 @@ string Encrypt(string_view text, const uchar key[kBlockSize]) {
 }
 
 string Decrypt(string_view crypt_text, const uchar key[kBlockSize]) {
-    uchar* raw_result = new uchar[(crypt_text.size() / kBlockSize + 1) * kBlockSize + 1];
-    raw_result[(crypt_text.size() / kBlockSize + 1) * kBlockSize] = 0;
+    uchar* raw_result = new uchar[(crypt_text.size() / (kBlockSize + 1) + 1) * kBlockSize + 1];
+    raw_result[(crypt_text.size() / (kBlockSize + 1) + 1) * kBlockSize] = 0;
     uint w[Nb * (Nr + 1)];
     KeyExpansion(key, w);
 
