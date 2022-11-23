@@ -1,4 +1,5 @@
 #include<iostream>
+#include<string>
 #include<iomanip>
 #include<cassert>
 #include<intrin.h>
@@ -8,6 +9,8 @@ using namespace std;
 
 using uchar = uint8_t;
 using uint = uint32_t;
+
+static const int kBlockSize = 8;
 
 static const uchar kInvReplace[] = {
   58, 50, 42, 34, 26, 18, 10,  2,
@@ -115,6 +118,19 @@ const uchar keyshift[] = {
     29, 21, 13,  5, 28, 20, 12,  4
 };
 
+uint SwapToBe(uint x) {
+    if constexpr (endian::native == endian::little)
+        x = ((x & 0xff) << 24) | ((x & 0xff00) << 8) | ((x & 0xff0000) >> 8) | ((x & 0xff000000) >> 24);
+    return x;
+}
+
+uint64_t SwapToBe(uint64_t x) {
+    if constexpr (endian::native == endian::little)
+        return  ((x & 0xff) << 56) | ((x & 0xff00) << 40) | ((x & 0xff0000) << 24) | ((x & 0xff000000) << 8) | 
+                ((x & 0xff00000000) >> 8) | ((x & 0xff0000000000) >> 24) | ((x & 0xff000000000000) >> 40) | 
+                ((x & 0xff00000000000000) >> 56);
+}
+
 void test_s(const uchar s[4][16]) {
     for (int i = 0; i < 4; i++) {
         bool f[16] = {};
@@ -205,7 +221,7 @@ uint64_t Compressor(uint32_t left, uint32_t right) {
     return result << 16;
 }
 
-void CreateKeyTable(uint8_t raw_key[8], uint64_t keys[16]) {
+void CreateKeyTable(const uchar raw_key[8], uint64_t keys[16]) {
     uint64_t key64 = 0;
     for (int i = 0; i < 8; i++)
         key64 = (key64 << 8) | raw_key[i];
@@ -236,7 +252,6 @@ void Round(uint32_t past_L, uint32_t past_R, uint32_t* L, uint32_t* R, uint64_t 
     uint32_t new_R = DES(past_R, round_key);
     *R = past_L ^ new_R;
     *L = past_R;
-    cout << hex << past_L << " " << past_R << " " << *L << " " << *R << " " << round_key << endl;
 }
 
 void EncryptBlock(const uint8_t in_block[8], uint8_t out_block[8], const uint64_t r_keys[16]) {
@@ -265,43 +280,77 @@ void EncryptBlock(const uint8_t in_block[8], uint8_t out_block[8], const uint64_
     }
 }
 
+uint64_t PopCount(uint8_t x) {
+    int count = 0;
+    for (int i = 0; i < 8; i++)
+        if (x & (1ull << i))
+            count++;
+    return count;
+}
+
+void KeyExpand(const uchar key_before[7], uchar key_after[8]) {
+    uint64_t x = 0;
+    for (int i = 0; i < 7; i++)
+        x |= (x << 8) | key_before[i];
+    x <<= 8;
+
+    uint64_t result = 0;
+    for (int i = 56; i > 0; i -= 7) {
+        uint64_t temp = (x & (0xfeull << i)) >> i;
+        temp |= 1 - PopCount(temp) % 2;
+        result = (result << 8) | temp;
+    }
+    *reinterpret_cast<uint64_t*>(key_after) = SwapToBe(result);
+}
+
 void print_hex(string_view sv) {
     for (int i = 0; i < sv.size(); i++)
         cout << hex << "0x" << ((uint)sv[i] & 0xff) << " ";
     cout << endl;
 }
 
-void GetReverse(const uchar s[64]) {
-    cout << "{ ";
-    for (int i = 1; i < 65; i++) {
-        for (int k = 0; k < 64; k++)
-            if (s[k] == i) {
-                cout << dec << k+1 << ", ";
-                break;
-            }
+string Encrypt(string_view text, const uchar key[7]) {
+    uchar* raw_result = new uchar[(text.size() / (kBlockSize + 1) + 1) * kBlockSize + 1];
+    raw_result[(text.size() / (kBlockSize + 1) + 1) * kBlockSize] = 0;
+    uint64_t w[16];
+
+    uchar cooked_key[8];
+    KeyExpand(key, cooked_key);
+    CreateKeyTable(cooked_key, w);
+
+    int i;
+    for (i = 0; i < text.size() && (i + kBlockSize - 1) < text.size(); i += kBlockSize)
+        EncryptBlock(reinterpret_cast<const uchar*>(text.data()) + i, raw_result + i, w);
+
+    if (i != text.size()) {
+        uchar temp[kBlockSize] = {}; // “ака€ инициализаци€ заполн€ет массив нул€ми
+
+        for (int j = (text.size() / kBlockSize) * kBlockSize; j < text.size(); j++)
+            temp[j % kBlockSize] = text[j];
+
+        EncryptBlock(temp, raw_result + i, w);
     }
-    cout << " }";
+
+    string result(reinterpret_cast<char*>(raw_result));
+    delete[] raw_result;
+
+    return result;
 }
 
 int main() {
-    for (int i = 0; i < 8; i++) {
-        test_s(S[i]);
-        cout << i << " passed" << endl;
-    }
+    string_view key = "1234567";
+    uchar raw_key[7] = {};
+    for (int i = 0; i < 7 && i < key.size(); i++)
+        raw_key[i] = key[i];
 
-    uchar text[8] = {0x12, 0x34, 0x56, 0xAB, 0xCD, 0x13, 0x25, 0x36};
-    uchar key[8] = {0xAA, 0xBB, 0x09, 0x18, 0x27, 0x36, 0xCC, 0xDD};
-    uchar out[8];
-
-    uint64_t w[16];
-    CreateKeyTable(key, w);
-    EncryptBlock(text, out, w);
-
-    for (int i = 0; i < 8; i++)
-        cout << hex << "0x" << (uint)out[i] << " ";
-
-    cout << endl << endl;
-    GetReverse(kReplace);
+    string text;
+    cout << "Enter plain text: ";
+    getline(cin, text);
     cout << endl;
-    GetReverse(kInvReplace);
+
+    string cypher_text = Encrypt(text, raw_key);
+    cout << "Plain text: " << cypher_text << endl;
+    cout << "Hex: ";
+    print_hex(cypher_text);
+    cout << endl;
 }
