@@ -126,9 +126,10 @@ uint SwapToBe(uint x) {
 
 uint64_t SwapToBe(uint64_t x) {
     if constexpr (endian::native == endian::little)
-        return  ((x & 0xff) << 56) | ((x & 0xff00) << 40) | ((x & 0xff0000) << 24) | ((x & 0xff000000) << 8) | 
-                ((x & 0xff00000000) >> 8) | ((x & 0xff0000000000) >> 24) | ((x & 0xff000000000000) >> 40) | 
-                ((x & 0xff00000000000000) >> 56);
+        x =  ((x & 0xff) << 56) | ((x & 0xff00) << 40) | ((x & 0xff0000) << 24) | ((x & 0xff000000) << 8) | 
+             ((x & 0xff00000000) >> 8) | ((x & 0xff0000000000) >> 24) | ((x & 0xff000000000000) >> 40) | 
+             ((x & 0xff00000000000000) >> 56);
+    return x;
 }
 
 void test_s(const uchar s[4][16]) {
@@ -338,11 +339,9 @@ string Encrypt(const string_view text, const uchar key[7]) {
 }
 
 void Collapse(const string_view sv_key, uchar out_key[7]) {
-    int i = 0;
-    for (; i < 7 && i < sv_key.size(); i++)
-        out_key[i] = sv_key[i];
-    
-    for (int k = 0; i < sv_key.size(); i ++, k = (k + 1) % 7) {
+    for (int i = 0; i < 7; i++)
+        out_key[i] = 0;
+    for (int k = 0, i = 0; i < sv_key.size(); i++, k = (k + 1) % 7) {
         out_key[k] ^= sv_key[i];
     }
 }
