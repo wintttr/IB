@@ -303,13 +303,13 @@ void KeyExpand(const uchar key_before[7], uchar key_after[8]) {
     *reinterpret_cast<uint64_t*>(key_after) = SwapToBe(result);
 }
 
-void print_hex(string_view sv) {
+void print_hex(const string_view sv) {
     for (int i = 0; i < sv.size(); i++)
         cout << hex << "0x" << ((uint)sv[i] & 0xff) << " ";
     cout << endl;
 }
 
-string Encrypt(string_view text, const uchar key[7]) {
+string Encrypt(const string_view text, const uchar key[7]) {
     uchar* raw_result = new uchar[(text.size() / (kBlockSize + 1) + 1) * kBlockSize + 1];
     raw_result[(text.size() / (kBlockSize + 1) + 1) * kBlockSize] = 0;
     uint64_t w[16];
@@ -337,11 +337,24 @@ string Encrypt(string_view text, const uchar key[7]) {
     return result;
 }
 
+void Collapse(const string_view sv_key, uchar out_key[7]) {
+    int i = 0;
+    for (; i < 7 && i < sv_key.size(); i++)
+        out_key[i] = sv_key[i];
+    
+    for (int k = 0; i < sv_key.size(); i ++, k = (k + 1) % 7) {
+        out_key[k] ^= sv_key[i];
+    }
+}
+
 int main() {
-    string_view key = "1234567";
     uchar raw_key[7] = {};
-    for (int i = 0; i < 7 && i < key.size(); i++)
-        raw_key[i] = key[i];
+
+    string key;
+    cout << "Enter key: ";
+    getline(cin, key);
+    cout << endl;
+    Collapse(key, raw_key);
 
     string text;
     cout << "Enter plain text: ";
