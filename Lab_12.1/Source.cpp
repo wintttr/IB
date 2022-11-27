@@ -166,8 +166,22 @@ bool MillerRabin(mpz_class n, int rounds) {
 // текст раздувает неимоверно, но мне так лень это 
 // делать :с
 vector<mpz_class> Encrypt(const vector<uint8_t>& s, mpz_class e, mpz_class n) {
+	const int charcount = 124;
 	vector<mpz_class> v;
-	for (uint8_t c : s) {
+	size_t i = 0;
+	for (; i + charcount-1 < s.size(); i += charcount) {
+		mpz_class c = 0;
+		for (int j = 0; j < charcount; j++)
+			c = (c << 8) | s[i + j];
+		v.push_back(FastDegree(c, e, n));
+	}
+
+	if (s.size() % charcount != 0) {
+		int k = 0;
+		mpz_class c = 0;
+		for (; i < s.size(); i++, k++)
+			c = (c << 8) | s[i];
+		c <<= 8 * (charcount - k);
 		v.push_back(FastDegree(c, e, n));
 	}
 	return v;
@@ -175,9 +189,16 @@ vector<mpz_class> Encrypt(const vector<uint8_t>& s, mpz_class e, mpz_class n) {
 
 // Уродливое расшифрование
 vector<uint8_t> Decrypt(const vector<mpz_class>& s, mpz_class d, mpz_class n) {
+	const int charcount = 124;
+
 	vector<uint8_t> v;
-	for (auto c : s)
-		v.push_back(FastDegree(c, d, n).get_ui());
+	for (auto c : s) {
+		mpz_class a = FastDegree(c, d, n);
+		for (int i = 0; i < charcount / 4; i++) {
+			for (int j = 0; j < 4; j++)
+				v.push_back((mpz_class(a >> 32 * (charcount / 4 - i - 1)).get_ui() >> (8 * (3 - j))) & 0xff);
+		}
+	}
 	return v;
 }
 
@@ -273,5 +294,5 @@ int main() {
 
 		cout << "\tHex:";
 		for (auto i : decrypt_text_vector)
-			cout << hex << (((uint32_t)i) & 0xff) << " ";
+			cout << hex << "0x" << (((uint32_t)i) & 0xff) << " ";
 }
