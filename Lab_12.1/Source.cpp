@@ -294,4 +294,17 @@ int main() {
 		cout << "\tHex:";
 		for (auto i : decrypt_text_vector)
 			cout << hex << "0x" << (((uint32_t)i) & 0xff) << " ";
+	
+	cout << endl << endl;
+	cout << "Open key: " << endl;
+	cout << "\te: " << e.get_str() << endl;
+	cout << "\tn: " << n.get_str() << endl;
+
+	ofstream fout("secret.key");
+
+	fout << "Secret key: " << endl;
+	fout << "\td: " << d.get_str() << endl;
+	fout << "\tn: " << n.get_str() << endl;
+
+	fout.close();
 }
