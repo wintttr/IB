@@ -8,11 +8,13 @@
 #include"mini-gmpxx.h"
 #include"random.h"
 
+#include<Windows.h>
+
 using namespace std;
 
 Random r;
 
-// Быстрое возведение числа a в степень w по модулю n
+// Р‘С‹СЃС‚СЂРѕРµ РІРѕР·РІРµРґРµРЅРёРµ С‡РёСЃР»Р° a РІ СЃС‚РµРїРµРЅСЊ w РїРѕ РјРѕРґСѓР»СЋ n
 mpz_class FastDegree(mpz_class a, mpz_class w, mpz_class n) {
 	mpz_class S = 1, V = w, c = a;
 	while (V != 0) {
@@ -24,7 +26,7 @@ mpz_class FastDegree(mpz_class a, mpz_class w, mpz_class n) {
 	return a == 0 ? 0 : S;
 }
 
-// Рандомные 512 бит
+// Р Р°РЅРґРѕРјРЅС‹Рµ 512 Р±РёС‚
 mpz_class Random512bit() {
 	mpz_class num = 0;
 
@@ -39,29 +41,29 @@ mpz_class Random512bit() {
 	return num;
 }
 
-// Тест Миллера-Рабина
-// Проверяет число n на простоту за rounds раундов
-// Возвращает false, если число составное и
-// true, если вероятно-простое
+// РўРµСЃС‚ РњРёР»Р»РµСЂР°-Р Р°Р±РёРЅР°
+// РџСЂРѕРІРµСЂСЏРµС‚ С‡РёСЃР»Рѕ n РЅР° РїСЂРѕСЃС‚РѕС‚Сѓ Р·Р° rounds СЂР°СѓРЅРґРѕРІ
+// Р’РѕР·РІСЂР°С‰Р°РµС‚ false, РµСЃР»Рё С‡РёСЃР»Рѕ СЃРѕСЃС‚Р°РІРЅРѕРµ Рё
+// true, РµСЃР»Рё РІРµСЂРѕСЏС‚РЅРѕ-РїСЂРѕСЃС‚РѕРµ
 bool MillerRabin(mpz_class n, int rounds) {
 	if (n % 2 == 0)
 		return false;
 
-	// Если число раундов > n-2, то не получится найти
-	// нужное количество случайных уникальных чисел и 
-	// алгоритм зациклится
+	// Р•СЃР»Рё С‡РёСЃР»Рѕ СЂР°СѓРЅРґРѕРІ > n-2, С‚Рѕ РЅРµ РїРѕР»СѓС‡РёС‚СЃСЏ РЅР°Р№С‚Рё
+	// РЅСѓР¶РЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ СЃР»СѓС‡Р°Р№РЅС‹С… СѓРЅРёРєР°Р»СЊРЅС‹С… С‡РёСЃРµР» Рё 
+	// Р°Р»РіРѕСЂРёС‚Рј Р·Р°С†РёРєР»РёС‚СЃСЏ
 	if (rounds > n - 2)
 		rounds = n.get_ui() - 2;
 
-	// Делим n - 1 на 2 пока делится, в итоге получаем 
-	// выражение 2^s * t, где t - нечётное
+	// Р”РµР»РёРј n - 1 РЅР° 2 РїРѕРєР° РґРµР»РёС‚СЃСЏ, РІ РёС‚РѕРіРµ РїРѕР»СѓС‡Р°РµРј 
+	// РІС‹СЂР°Р¶РµРЅРёРµ 2^s * t, РіРґРµ t - РЅРµС‡С‘С‚РЅРѕРµ
 	mpz_class s = 0, t = n - 1;
 	do {
 		t /= 2;
 		s++;
 	} while (t % 2 == 0);
 
-	// Рандомим rounds чисел из промежутка [2, n - 1]
+	// Р Р°РЅРґРѕРјРёРј rounds С‡РёСЃРµР» РёР· РїСЂРѕРјРµР¶СѓС‚РєР° [2, n - 1]
 	vector<mpz_class> nums;
 	for (int k = 0; k < rounds; k++) {
 		mpz_class temp = (Random512bit() % (n - 2)) + 2;
@@ -72,7 +74,7 @@ bool MillerRabin(mpz_class n, int rounds) {
 		nums.push_back(temp);
 	}
 
-	// Выполняем rounds раундов теста Миллера-Рабина
+	// Р’С‹РїРѕР»РЅСЏРµРј rounds СЂР°СѓРЅРґРѕРІ С‚РµСЃС‚Р° РњРёР»Р»РµСЂР°-Р Р°Р±РёРЅР°
 	for (const mpz_class& a : nums) {
 		mpz_class x = FastDegree(a, t, n);
 		if (x == 1 || x == n - 1)
@@ -120,7 +122,7 @@ set<mpz_class> Factorization(mpz_class x) {
 	return primes;
 }
 
-// Алгоритм Евклида по поиску НОД
+// РђР»РіРѕСЂРёС‚Рј Р•РІРєР»РёРґР° РїРѕ РїРѕРёСЃРєСѓ РќРћР”
 mpz_class GCD(mpz_class a, mpz_class b) {
 	while (b != 0) {
 		a %= b;
@@ -129,7 +131,7 @@ mpz_class GCD(mpz_class a, mpz_class b) {
 	return a;
 }
 
-// Проверка на взаимную простоту
+// РџСЂРѕРІРµСЂРєР° РЅР° РІР·Р°РёРјРЅСѓСЋ РїСЂРѕСЃС‚РѕС‚Сѓ
 bool IsCoPrime(mpz_class a, mpz_class b) {
 	return GCD(a, b) == 1;
 }
@@ -154,7 +156,7 @@ mpz_class ChooseRoot(mpz_class p) {
 	throw;
 }
 
-// Уродливое шифрование
+// РЈСЂРѕРґР»РёРІРѕРµ С€РёС„СЂРѕРІР°РЅРёРµ
 vector<mpz_class> Encrypt(const vector<uint8_t>& s, mpz_class y, mpz_class g, mpz_class p, mpz_class k) {
 	const int charcount = 60;
 	vector<mpz_class> v;
@@ -179,7 +181,7 @@ vector<mpz_class> Encrypt(const vector<uint8_t>& s, mpz_class y, mpz_class g, mp
 	return v;
 }
 
-// Уродливое расшифрование
+// РЈСЂРѕРґР»РёРІРѕРµ СЂР°СЃС€РёС„СЂРѕРІР°РЅРёРµ
 vector<uint8_t> Decrypt(const vector<mpz_class>& s, mpz_class x, mpz_class p) {
 	const int charcount = 60;
 
@@ -217,27 +219,30 @@ vector<uint8_t> ConvertToVectorOfUnsignedChars(const vector<mpz_class>& mpv) {
 }
 
 int main() {
+	SetConsoleCP(65001);
+	SetConsoleOutputCP(65001);
+
 	constexpr int round_count = 20;
 	mpz_class p = Random512bit() | 1 | (mpz_class(1) << 511);
 
-	cout << "Генерация p" << endl;
+	cout << "Р“РµРЅРµСЂР°С†РёСЏ p" << endl;
 	while (!MillerRabin(p, round_count))
 		p += 2;
 
-	cout << "Генерация g" << endl;
+	cout << "Р“РµРЅРµСЂР°С†РёСЏ g" << endl;
 	mpz_class g = ChooseRoot(p);
 
 	mpz_class x = Random512bit() & ((mpz_class(1) << 511) - 1) | 1;
 	mpz_class y = FastDegree(g, x, p);
 	mpz_class k = Random512bit() & ((mpz_class(1) << 511) - 1) | 1;
 
-	cout << "Генерация k" << endl;
+	cout << "Р“РµРЅРµСЂР°С†РёСЏ k" << endl;
 	while (!IsCoPrime(k, p - 1))
 		k += 2;
 
-	string raw_text = "ты чертила обоссаная закрой свой рот может у тебя мать сдохла \
-если ты такой даун с 5 iq говоришь то что мать сдохла м да ммм шутить про мать в \
-2020 году класс ты гений";
+	string raw_text = "С‚С‹ С‡РµСЂС‚РёР»Р° РѕР±РѕСЃСЃР°РЅР°СЏ Р·Р°РєСЂРѕР№ СЃРІРѕР№ СЂРѕС‚ РјРѕР¶РµС‚ Сѓ С‚РµР±СЏ РјР°С‚СЊ СЃРґРѕС…Р»Р° \
+РµСЃР»Рё С‚С‹ С‚Р°РєРѕР№ РґР°СѓРЅ СЃ 5 iq РіРѕРІРѕСЂРёС€СЊ С‚Рѕ С‡С‚Рѕ РјР°С‚СЊ СЃРґРѕС…Р»Р° Рј РґР° РјРјРј С€СѓС‚РёС‚СЊ РїСЂРѕ РјР°С‚СЊ РІ \
+2020 РіРѕРґСѓ РєР»Р°СЃСЃ С‚С‹ РіРµРЅРёР№";
 
 	vector<uint8_t> raw_text_vector;
 	copy(raw_text.begin(), raw_text.end(), back_inserter(raw_text_vector));
