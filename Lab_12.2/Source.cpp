@@ -240,9 +240,7 @@ int main() {
 	while (!IsCoPrime(k, p - 1))
 		k += 2;
 
-	string raw_text = "ты чертила обоссаная закрой свой рот может у тебя мать сдохла \
-если ты такой даун с 5 iq говоришь то что мать сдохла м да ммм шутить про мать в \
-2020 году класс ты гений";
+	string raw_text = "test";
 
 	vector<uint8_t> raw_text_vector;
 	copy(raw_text.begin(), raw_text.end(), back_inserter(raw_text_vector));
