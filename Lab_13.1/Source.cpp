@@ -91,13 +91,11 @@ public:
 		}
 	}
 
-	void X(uint8_t* dst, uint8_t* a, uint8_t* b)
-	{
+	void X(uint8_t* dst, uint8_t* a, uint8_t* b) {
 		xor512(dst, a, b);
 	}
 
-	void E(uint8_t* dst, uint8_t* k, uint8_t* m)
-	{
+	void E(uint8_t* dst, uint8_t* k, uint8_t* m) {
 		uint8_t i;
 
 		uint8_t K[kBlockSize];
@@ -119,8 +117,7 @@ public:
 		}
 	}
 
-	void g_N(uint8_t* h, uint8_t* N, uint8_t* m)
-	{
+	void g_N(uint8_t* h, uint8_t* N, uint8_t* m) {
 		uint8_t hash[kBlockSize];
 		memcpy(hash, h, kBlockSize);
 
@@ -135,8 +132,7 @@ public:
 		xor512(h, h, m);
 	}
 
-	void g_0(uint8_t* h, uint8_t* m)
-	{
+	void g_0(uint8_t* h, uint8_t* m) {
 		uint8_t hash[64];
 		memcpy(hash, h, kBlockSize);
 
@@ -150,10 +146,10 @@ public:
 	}
 
 	
-	friend string Encrypt(const string_view sv, HashSize size);
+	friend string GetHash(const string_view sv, HashSize size);
 };
 
-string Encrypt(const string_view sv, HashSize size)
+string GetHash(const string_view sv, HashSize size)
 {
 	StribogHash temp(size);
 
@@ -199,11 +195,13 @@ string Encrypt(const string_view sv, HashSize size)
 
 
 int main() {
-	for (auto i : Encrypt("Testestestest1", HASH256))
-		cout << hex << "0x" << (((uint32_t)i) & 0xff) << " ";
+	cout << "HASH512: " << endl;
+	for (auto i : GetHash(string(60, 'a'), HASH512))
+		cout << hex << (((uint32_t)i) & 0xff);
 	cout << endl << endl;
 
-	for (auto i : Encrypt("Testestestest2", HASH256))
-		cout << hex << "0x" << (((uint32_t)i) & 0xff) << " ";
+	cout << "HASH256: " << endl;
+	for (auto i : GetHash(string(60, 'a'), HASH256))
+		cout << hex << (((uint32_t)i) & 0xff);
 	cout << endl << endl;
 }
