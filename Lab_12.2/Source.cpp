@@ -157,12 +157,18 @@ mpz_class ChooseRoot(mpz_class p) {
 }
 
 // Уродливое шифрование
-vector<mpz_class> Encrypt(const vector<uint8_t>& s, mpz_class y, mpz_class g, mpz_class p, mpz_class k) {
+vector<mpz_class> Encrypt(const vector<uint8_t>& s, mpz_class y, mpz_class g, mpz_class p) {
 	const int charcount = 60;
 	vector<mpz_class> v;
 	size_t i = 0;
 	for (; i + charcount - 1 < s.size(); i += charcount) {
 		mpz_class c = 0;
+		mpz_class k = Random512bit() & ((mpz_class(1) << 511) - 1) | 1;
+
+		cout << "Генерация k" << endl;
+		while (!IsCoPrime(k, p - 1))
+			k += 2;
+
 		for (int j = 0; j < charcount; j++)
 			c = (c << 8) | s[i + j];
 		v.push_back(FastDegree(g, k, p));
@@ -170,11 +176,17 @@ vector<mpz_class> Encrypt(const vector<uint8_t>& s, mpz_class y, mpz_class g, mp
 	}
 
 	if (s.size() % charcount != 0) {
-		int k = 0;
+		int u = 0;
+		mpz_class k = Random512bit() & ((mpz_class(1) << 511) - 1) | 1;
+
+		cout << "Генерация k" << endl;
+		while (!IsCoPrime(k, p - 1))
+			k += 2;
+
 		mpz_class c = 0;
-		for (; i < s.size(); i++, k++)
+		for (; i < s.size(); i++, u++)
 			c = (c << 8) | s[i];
-		c <<= 8 * (charcount - k);
+		c <<= 8 * (charcount - u);
 		v.push_back(FastDegree(g, k, p));
 		v.push_back(FastDegree(y, k, p) * c % p);
 	}
@@ -234,17 +246,13 @@ int main() {
 
 	mpz_class x = Random512bit() & ((mpz_class(1) << 511) - 1) | 1;
 	mpz_class y = FastDegree(g, x, p);
-	mpz_class k = Random512bit() & ((mpz_class(1) << 511) - 1) | 1;
-
-	cout << "Генерация k" << endl;
-	while (!IsCoPrime(k, p - 1))
-		k += 2;
+	
 
 	string raw_text = "test";
 
 	vector<uint8_t> raw_text_vector;
 	copy(raw_text.begin(), raw_text.end(), back_inserter(raw_text_vector));
-	vector<mpz_class> crypt_text_vector = Encrypt(raw_text_vector, y, g, p, k);
+	vector<mpz_class> crypt_text_vector = Encrypt(raw_text_vector, y, g, p);
 	vector<uint8_t> decrypt_text_vector = Decrypt(crypt_text_vector, x, p);
 
 	cout << "Raw: " << endl;
